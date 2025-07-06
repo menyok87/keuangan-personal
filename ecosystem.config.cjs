@@ -1,8 +1,7 @@
 module.exports = {
   apps: [{
     name: 'akuntansi-keuangan',
-    script: 'npm',
-    args: 'run preview:production',
+    script: 'server.js',
     cwd: '/var/www/keuangan/keuangan-personal',
     instances: 1,
     autorestart: true,
