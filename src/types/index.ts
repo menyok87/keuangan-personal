@@ -67,3 +67,6 @@ export interface RecurringTransaction {
   next_date: string;
   is_active: boolean;
 }
+
+// Re-export debt types
+export * from './debt';
