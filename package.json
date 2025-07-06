@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:production": "NODE_ENV=production vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:production": "vite preview --host 0.0.0.0 --port 3000",
+    "start": "npm run preview:production"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
