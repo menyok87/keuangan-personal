@@ -9,7 +9,7 @@ export default defineConfig({
     port: 5173
   },
   preview: {
-    host: true,
+    host: '0.0.0.0',
     port: 3000,
     // Allow access from any host for production deployment
     allowedHosts: [
@@ -17,8 +17,8 @@ export default defineConfig({
       '127.0.0.1',
       'keuangan99.com',
       'www.keuangan99.com',
-      // Add your VPS IP if needed
-      // 'YOUR_VPS_IP_HERE'
+      '.keuangan99.com', // Wildcard for subdomains
+      'all' // Allow all hosts (for production)
     ]
   },
   build: {
