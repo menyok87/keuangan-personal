@@ -12,7 +12,8 @@ import {
   CheckCircle,
   Clock,
   BarChart3,
-  Wallet
+  Wallet,
+  CreditCard
 } from 'lucide-react';
 import { Transaction, MonthlyStats, Budget } from '../types';
 import { useSupabaseBudgets } from '../hooks/useSupabaseBudgets';

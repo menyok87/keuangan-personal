@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings } from 'lucide-react';
+import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings, CreditCard } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSupabaseTransactions } from './hooks/useSupabaseTransactions';
 import { useSupabaseBudgets } from './hooks/useSupabaseBudgets';
 import { useSupabaseGoals } from './hooks/useSupabaseGoals';
+import { useSupabaseDebts } from './hooks/useSupabaseDebts';
 import AuthPage from './components/Auth/AuthPage';
 import UserProfile from './components/UserProfile';
 import Dashboard from './components/Dashboard';
@@ -12,6 +13,7 @@ import TransactionList from './components/TransactionList';
 import BudgetManager from './components/BudgetManager';
 import FinancialGoals from './components/FinancialGoals';
 import Reports from './components/Reports';
+import DebtManagement from './components/DebtManagement';
 import MonthSelector from './components/MonthSelector';
 import { Transaction } from './types';
 
@@ -23,7 +25,7 @@ function App() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget' | 'goals' | 'reports'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget' | 'goals' | 'debts' | 'reports'>('dashboard');
 
   const {
     transactions,
@@ -52,6 +54,16 @@ function App() {
     updateGoal,
     deleteGoal
   } = useSupabaseGoals(user?.id);
+
+  const {
+    debts,
+    loading: debtsLoading,
+    error: debtsError,
+    addDebt,
+    updateDebt,
+    deleteDebt: removeDebt,
+    addPayment
+  } = useSupabaseDebts(user?.id);
 
   // Show auth page if not authenticated
   if (authLoading) {
@@ -250,6 +262,7 @@ function App() {
     { id: 'transactions', label: 'Transaksi', icon: Receipt },
     { id: 'budget', label: 'Anggaran', icon: Target },
     { id: 'goals', label: 'Target', icon: Settings },
+    { id: 'debts', label: 'Hutang', icon: CreditCard },
     { id: 'reports', label: 'Laporan', icon: BarChart3 }
   ];
 
@@ -371,6 +384,10 @@ function App() {
 
         {activeTab === 'reports' && (
           <Reports transactions={transactions} />
+        )}
+
+        {activeTab === 'debts' && (
+          <DebtManagement />
         )}
       </main>
 

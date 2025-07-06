@@ -20,6 +20,7 @@ import { useSupabaseDebts } from '../hooks/useSupabaseDebts';
 import { useAuth } from '../hooks/useAuth';
 import DebtForm from './DebtForm';
 import PaymentForm from './PaymentForm';
+import DebtReports from './DebtReports';
 
 const DebtManagement: React.FC = () => {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ const DebtManagement: React.FC = () => {
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
   const [filter, setFilter] = useState<'all' | 'debt' | 'receivable'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'partial' | 'paid'>('all');
+  const [activeView, setActiveView] = useState<'list' | 'reports'>('list');
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -200,16 +202,48 @@ const DebtManagement: React.FC = () => {
             <p className="text-gray-600">Kelola dan pantau hutang serta piutang Anda</p>
           </div>
           
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Tambah Hutang/Piutang</span>
-          </button>
+          <div className="flex space-x-4">
+            <div className="flex bg-gray-100 rounded-xl p-1">
+              <button
+                onClick={() => setActiveView('list')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeView === 'list'
+                    ? 'bg-white text-gray-800 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Daftar
+              </button>
+              <button
+                onClick={() => setActiveView('reports')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeView === 'reports'
+                    ? 'bg-white text-gray-800 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                Laporan
+              </button>
+            </div>
+            
+            {activeView === 'list' && (
+              <button
+                onClick={() => setShowForm(true)}
+                className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Tambah Hutang/Piutang</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* Show Reports or List based on active view */}
+      {activeView === 'reports' ? (
+        <DebtReports />
+      ) : (
+        <>
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
@@ -465,6 +499,8 @@ const DebtManagement: React.FC = () => {
           )}
         </div>
       </div>
+        </>
+      )}
 
       {/* Forms */}
       {showForm && (
