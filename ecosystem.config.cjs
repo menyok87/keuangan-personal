@@ -3,7 +3,7 @@ module.exports = {
     name: 'akuntansi-keuangan',
     script: 'npm',
     args: 'run preview:production',
-    cwd: '/var/www/akuntansi-keuangan',
+    cwd: '/var/www/keuangan/keuangan-personal',
     instances: 1,
     autorestart: true,
     watch: false,
