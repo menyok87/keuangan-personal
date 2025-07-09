@@ -13,7 +13,7 @@ import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
 import BudgetManager from './components/BudgetManager';
 import FinancialGoals from './components/FinancialGoals';
-import Reports from './components/Reports';
+import ReportsWithProfile from './components/ReportsWithProfile';
 import DebtManagement from './components/DebtManagement';
 import MonthSelector from './components/MonthSelector';
 import DarkModeToggle from './components/DarkModeToggle';
@@ -389,7 +389,7 @@ function App() {
         )}
 
         {activeTab === 'reports' && (
-          <Reports transactions={transactions} />
+          <ReportsWithProfile transactions={transactions} />
         )}
 
         {activeTab === 'debts' && (
