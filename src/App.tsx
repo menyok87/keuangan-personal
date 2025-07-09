@@ -85,7 +85,8 @@ function App() {
     return <AuthPage onAuthSuccess={() => {}} />;
   }
 
-      if (!user?.id) {
+  if (!user?.id) {
+    return (
     <MainLayout 
       activeTab={activeTab}
       onTabChange={(tab) => setActiveTab(tab as any)}
@@ -104,7 +105,10 @@ function App() {
             </button>
           </div>
         )}
-      
+      </div>
+    </MainLayout>
+    );
+  }
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
