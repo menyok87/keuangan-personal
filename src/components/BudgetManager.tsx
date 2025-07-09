@@ -163,6 +163,8 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
           
           return (
             <div key={budget.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+              <div className="flex items-center justify-between mb-4">
+                <div>
                     <h3 className="font-semibold text-gray-800 dark:text-white">{budget.category}</h3>
                     <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
                     {budget.period === 'monthly' ? 'Bulanan' : 'Tahunan'}
@@ -187,6 +189,7 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
                     </button>
                   </div>
                 </div>
+              </div>
               </div>
               
               <div className="space-y-3">
