@@ -7,7 +7,7 @@ import { useSupabaseBudgets } from './hooks/useSupabaseBudgets';
 import { useSupabaseGoals } from './hooks/useSupabaseGoals';
 import { useSupabaseDebts } from './hooks/useSupabaseDebts';
 import AuthPage from './components/Auth/AuthPage';
-import UserProfile from './components/UserProfile';
+import CustomUserProfile from './components/CustomUserProfile';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
@@ -330,7 +330,7 @@ function App() {
             </div>
           </div>
           <div className="lg:col-span-1">
-            <UserProfile />
+            <CustomUserProfile />
           </div>
         </div>
       </div>
