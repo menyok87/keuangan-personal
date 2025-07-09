@@ -165,10 +165,8 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
             <div key={budget.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                     <h3 className="font-semibold text-gray-800 dark:text-white">{budget.category}</h3>
                     <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
-                  <h3 className="font-semibold text-gray-800">{budget.category}</h3>
-                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
                     {budget.period === 'monthly' ? 'Bulanan' : 'Tahunan'}
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{budget.category}</p>
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className={`${status.bg} rounded-full p-2`}>
