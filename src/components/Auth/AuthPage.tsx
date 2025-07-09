@@ -34,9 +34,9 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex">
       {/* Left Side - Features */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-12 flex-col justify-center relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-700 dark:via-blue-800 dark:to-indigo-900 p-12 flex-col justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 text-white">
           <div className="mb-12">
@@ -80,14 +80,14 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
 
       {/* Right Side - Auth Forms */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md text-sm">
           {/* Mobile Header */}
           <div className="lg:hidden text-center mb-8">
             <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-4 w-16 h-16 mx-auto mb-4">
               <BarChart3 className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">Akuntansi Keuangan</h1>
-            <p className="text-gray-600">Kelola keuangan pribadi dengan mudah</p>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Akuntansi Keuangan</h1>
+            <p className="text-gray-600 dark:text-gray-300">Kelola keuangan pribadi dengan mudah</p>
           </div>
 
           {isLogin ? (
@@ -104,13 +104,13 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
           
           {/* Help Text */}
           <div className="mt-6 text-center">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <p className="text-sm text-blue-700">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
                 <strong>💡 Tips:</strong> Jika mengalami masalah pendaftaran, coba gunakan email lain atau login dengan akun admin:
               </p>
-              <p className="text-xs text-blue-600 mt-2">
-                Email: <code className="bg-blue-100 px-1 rounded">admin@akuntansi.com</code> | 
-                Password: <code className="bg-blue-100 px-1 rounded">admin123</code>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                Email: <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">admin@akuntansi.com</code> | 
+                Password: <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">admin123</code>
               </p>
             </div>
           </div>

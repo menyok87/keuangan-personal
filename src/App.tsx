@@ -6,7 +6,6 @@ import { useSupabaseBudgets } from './hooks/useSupabaseBudgets';
 import { useSupabaseGoals } from './hooks/useSupabaseGoals';
 import { useSupabaseDebts } from './hooks/useSupabaseDebts';
 import AuthPage from './components/Auth/AuthPage';
-import UserProfile from './components/UserProfile';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
@@ -16,6 +15,9 @@ import Reports from './components/Reports';
 import DebtManagement from './components/DebtManagement';
 import MonthSelector from './components/MonthSelector';
 import { Transaction } from './types';
+import Navbar from './components/Navbar';
+import MainLayout from './components/MainLayout';
+import { useDarkMode } from './hooks/useDarkMode';
 
 function App() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -26,6 +28,7 @@ function App() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget' | 'goals' | 'debts' | 'reports'>('dashboard');
+  const { isDarkMode } = useDarkMode();
 
   const {
     transactions,
@@ -68,11 +71,11 @@ function App() {
   // Show auth page if not authenticated
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Memuat Aplikasi</h2>
-          <p className="text-gray-600">Sedang menyiapkan data keuangan Anda...</p>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Memuat Aplikasi</h2>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">Sedang menyiapkan data keuangan Anda...</p>
         </div>
       </div>
     );
@@ -247,90 +250,20 @@ function App() {
 
   if (loading || budgetsLoading || goalsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Memuat Aplikasi</h2>
-          <p className="text-gray-600">Sedang menyiapkan data keuangan Anda...</p>
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Memuat Aplikasi</h2>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">Sedang menyiapkan data keuangan Anda...</p>
         </div>
       </div>
     );
   }
 
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
-    { id: 'transactions', label: 'Transaksi', icon: Receipt },
-    { id: 'budget', label: 'Anggaran', icon: Target },
-    { id: 'goals', label: 'Target', icon: Settings },
-    { id: 'debts', label: 'Hutang', icon: CreditCard },
-    { id: 'reports', label: 'Laporan', icon: BarChart3 }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-3 shadow-lg">
-                <Receipt className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  Akuntansi Keuangan
-                </h1>
-                <p className="text-sm text-gray-600">Sistem manajemen keuangan personal</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setShowForm(true)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <Plus className="h-5 w-5" />
-                <span className="font-medium">Tambah Transaksi</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Navigation Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-2 border border-gray-200">
-              <div className="flex space-x-1">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-                        activeTab === tab.id
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="hidden sm:inline">{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-          <div className="lg:col-span-1">
-            <UserProfile />
-          </div>
-        </div>
-      </div>
-
+    <MainLayout activeTab={activeTab} onTabChange={setActiveTab}>
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <main className="space-y-8">
         {/* Month Selector - Only show for dashboard and transactions */}
         {(activeTab === 'dashboard' || activeTab === 'transactions') && (
           <div className="mb-8">
@@ -340,6 +273,17 @@ function App() {
             />
           </div>
         )}
+
+        {/* Add Transaction Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 text-white px-5 py-2 rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-800 dark:hover:to-indigo-800 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="font-medium">Tambah Transaksi</span>
+          </button>
+        </div>
 
         {/* Content based on active tab */}
         {activeTab === 'dashboard' && (
@@ -399,7 +343,7 @@ function App() {
           editTransaction={editingTransaction}
         />
       )}
-    </div>
+    </MainLayout>
   );
 }
 
