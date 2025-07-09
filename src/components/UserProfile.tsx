@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { User, LogOut, Settings, Edit2, Save, X, Camera, Mail, Calendar, Shield, Activity } from 'lucide-react';
+import { User, LogOut, Settings, Edit2, Save, X, Mail, Calendar, Shield, Activity } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import AvatarUpload from './AvatarUpload';
-import DarkModeToggle from './DarkModeToggle';
 import { supabase } from '../lib/supabase';
 
 const UserProfile: React.FC = () => {
@@ -113,10 +112,9 @@ const UserProfile: React.FC = () => {
             <div className="p-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
               {/* Quick Actions */}
               <div className="grid grid-cols-2 gap-3">
-                <DarkModeToggle />
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="flex items-center justify-center space-x-2 p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+                  className="flex items-center justify-center space-x-2 p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors col-span-2"
                 >
                   <Edit2 className="h-4 w-4" />
                   <span className="text-sm font-medium">Edit</span>
@@ -207,7 +205,6 @@ const UserProfile: React.FC = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Profil Pengguna</h3>
               <div className="flex items-center space-x-2">
-                <DarkModeToggle />
                 <button
                   onClick={handleSignOut}
                   className="flex items-center space-x-2 text-white/90 hover:text-white hover:bg-white/20 px-3 py-2 rounded-lg transition-colors"
