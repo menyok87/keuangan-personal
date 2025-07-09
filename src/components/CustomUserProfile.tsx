@@ -168,10 +168,9 @@ const CustomUserProfile: React.FC<CustomUserProfileProps> = ({ onClose, isModal 
         <div className="flex-shrink-0">
           <button
             onClick={() => setIsEditing(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors flex items-center gap-2"
+            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
           >
             <Edit2 className="h-4 w-4" />
-            <span>Edit Profil</span>
           </button>
         </div>
       </div>
@@ -215,10 +214,9 @@ const CustomUserProfile: React.FC<CustomUserProfileProps> = ({ onClose, isModal 
       <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={handleSignOut}
-          className="px-4 py-2 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
         >
           <LogOut className="h-4 w-4" />
-          <span>Keluar</span>
         </button>
         
         {isModal && (
