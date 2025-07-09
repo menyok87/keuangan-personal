@@ -10,11 +10,13 @@ import {
   X,
   Settings,
   Bell,
-  HelpCircle
+  HelpCircle,
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import DarkModeToggle from './DarkModeToggle';
 import ProfileModal from './ProfileModal';
+import { supabase } from '../lib/supabase';
 
 interface NavbarProps {
   activeTab: string;
@@ -32,7 +34,12 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
     const fetchProfile = async () => {
       if (user) {
         try {
-          const { data, error } = await fetch(`/api/profile?userId=${user.id}`).then(res => res.json());
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .single();
+          
           if (data && !error) {
             setAvatarUrl(data.avatar_url || '');
           }
@@ -52,7 +59,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   };
 
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
     { id: 'transactions', label: 'Transaksi', icon: Receipt },
     { id: 'budget', label: 'Anggaran', icon: Target },
     { id: 'goals', label: 'Target', icon: Settings },
@@ -66,7 +73,7 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
         <div className="flex items-center justify-between h-16">
           {/* Logo and Brand */}
           <div className="flex items-center">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg p-2 shadow-lg">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-500 dark:to-indigo-600 rounded-lg p-2 shadow-lg">
               <BarChart3 className="h-6 w-6 text-white" />
             </div>
             <div className="ml-3">
@@ -119,12 +126,12 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                 onClick={() => setIsProfileModalOpen(true)}
                 className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg px-3 py-2 transition-colors"
               >
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white overflow-hidden">
                   {avatarUrl ? (
                     <img 
                       src={avatarUrl} 
                       alt="Profile" 
-                      className="w-8 h-8 rounded-full object-cover"
+                      className="w-8 h-8 object-cover"
                       onError={() => setAvatarUrl('')}
                     />
                   ) : (

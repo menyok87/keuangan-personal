@@ -1,6 +1,6 @@
 import React from 'react';
 import Reports from './Reports';
-import ProfileReportSection from './ProfileReportSection';
+import ProfileSection from './ProfileSection';
 import { Transaction } from '../types';
 
 interface ReportsWithProfileProps {
@@ -14,7 +14,7 @@ const ReportsWithProfile: React.FC<ReportsWithProfileProps> = ({ transactions })
         <Reports transactions={transactions} />
       </div>
       <div className="lg:col-span-1">
-        <ProfileReportSection />
+        <ProfileSection />
       </div>
     </div>
   );

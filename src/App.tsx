@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings, CreditCard } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useSupabaseTransactions } from './hooks/useSupabaseTransactions';
@@ -18,7 +18,6 @@ import ReportsWithProfile from './components/ReportsWithProfile';
 import DebtManagement from './components/DebtManagement';
 import MonthSelector from './components/MonthSelector';
 import { Transaction } from './types';
-import { Plus } from 'lucide-react';
 
 function App() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -86,80 +85,26 @@ function App() {
     return <AuthPage onAuthSuccess={() => {}} />;
   }
 
-  const handleSubmit = async (transactionData: Omit<Transaction, 'id'>) => {
-    try {
-      console.log('=== APP HANDLE SUBMIT START ===');
-      console.log('Transaction data received:', transactionData);
-      console.log('👤 User ID:', user?.id);
-      console.log('🔐 Is authenticated:', isAuthenticated);
-      console.log('✏️  Editing transaction:', editingTransaction?.id);
-      
-      // Additional validation before submitting
       if (!user?.id) {
-        throw new Error('❌ User tidak ditemukan. Silakan login ulang.');
-      }
+    <MainLayout 
+      activeTab={activeTab}
+      onTabChange={(tab) => setActiveTab(tab as any)}
+      showProfile={activeTab === 'reports'}
+    >
+      <div>
+        {/* Add Transaction Button */}
+        {activeTab !== 'reports' && (
+          <div className="mb-6 flex justify-end">
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+            >
+              <Plus className="h-5 w-5" />
+              <span className="font-medium">Tambah Transaksi</span>
+            </button>
+          </div>
+        )}
       
-      if (!isAuthenticated) {
-        throw new Error('❌ Sesi login telah berakhir. Silakan login ulang.');
-      }
-      
-      if (editingTransaction) {
-        console.log('🔄 Updating existing transaction:', editingTransaction.id);
-        console.log('📝 Original transaction:', editingTransaction);
-        console.log('📝 Updates to apply:', transactionData);
-        
-        if (!editingTransaction.id) {
-          throw new Error('❌ ID transaksi tidak valid untuk update');
-        }
-        
-        await updateTransaction(editingTransaction.id, transactionData);
-        console.log('✅ Transaction updated successfully');
-        setEditingTransaction(null);
-      } else {
-        console.log('➕ Adding new transaction for user:', user?.id);
-        await addTransaction(transactionData);
-        console.log('✅ Transaction added successfully');
-      }
-      
-      setShowForm(false);
-      console.log('🎉 === APP HANDLE SUBMIT SUCCESS ===');
-      
-    } catch (error: any) {
-      console.error('💥 === APP HANDLE SUBMIT ERROR ===');
-      console.error('Error details:', error);
-      console.error('Error message:', error.message);
-      
-      // More specific error messages
-      let errorMessage = 'Gagal menyimpan transaksi';
-      
-      if (error.message.includes('tidak ditemukan') || error.message.includes('sudah dihapus')) {
-        errorMessage = 'Transaksi tidak ditemukan atau sudah dihapus. Data akan dimuat ulang.';
-        // Force refresh data
-        setTimeout(() => {
-          forceRefresh();
-          setShowForm(false);
-          setEditingTransaction(null);
-        }, 1500);
-      } else if (error.message.includes('tidak memiliki akses') || error.message.includes('akses ditolak') || error.message.includes('login ulang')) {
-        errorMessage = 'Sesi login bermasalah. Silakan logout dan login ulang.';
-      } else if (error.message.includes('network') || error.message.includes('fetch')) {
-        errorMessage = 'Masalah koneksi. Periksa internet Anda dan coba lagi.';
-      } else if (error.message.includes('validation') || error.message.includes('wajib')) {
-        errorMessage = error.message; // Show validation errors as-is
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      // Show user-friendly error message
-      alert(errorMessage);
-      
-      // Only close form for certain errors
-      if (error.message.includes('tidak ditemukan') || error.message.includes('login ulang')) {
-        setShowForm(false);
-        setEditingTransaction(null);
-      }
-    }
-  };
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);

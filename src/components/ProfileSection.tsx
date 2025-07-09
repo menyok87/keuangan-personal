@@ -214,6 +214,16 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ className = '' }) => {
             <div className="text-xs text-orange-600 dark:text-orange-400">Hutang/Piutang</div>
           </div>
         </div>
+        
+        {/* Edit Profile Link */}
+        <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+          <button 
+            onClick={() => {}} 
+            className="w-full py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors text-sm font-medium"
+          >
+            Lihat Profil Lengkap
+          </button>
+        </div>
       </div>
     </div>
   );
