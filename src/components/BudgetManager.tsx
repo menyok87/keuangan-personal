@@ -190,7 +190,6 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
                   </div>
                 </div>
               </div>
-              </div>
               
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
