@@ -1,27 +1,24 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings, CreditCard } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
-import { useDarkMode } from './hooks/useDarkMode';
 import { useSupabaseTransactions } from './hooks/useSupabaseTransactions';
 import { useSupabaseBudgets } from './hooks/useSupabaseBudgets';
 import { useSupabaseGoals } from './hooks/useSupabaseGoals';
 import { useSupabaseDebts } from './hooks/useSupabaseDebts';
 import AuthPage from './components/Auth/AuthPage';
-import MainLayout from './components/MainLayout';
-import Navbar from './components/Navbar';
+import UserProfile from './components/UserProfile';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
 import BudgetManager from './components/BudgetManager';
 import FinancialGoals from './components/FinancialGoals';
-import ReportsWithProfile from './components/ReportsWithProfile';
+import Reports from './components/Reports';
 import DebtManagement from './components/DebtManagement';
 import MonthSelector from './components/MonthSelector';
 import { Transaction } from './types';
 
 function App() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
-  const { isDarkMode } = useDarkMode();
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -71,11 +68,11 @@ function App() {
   // Show auth page if not authenticated
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Memuat Aplikasi</h2>
-          <p className="text-gray-600 dark:text-gray-300">Sedang menyiapkan data keuangan Anda...</p>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Memuat Aplikasi</h2>
+          <p className="text-gray-600">Sedang menyiapkan data keuangan Anda...</p>
         </div>
       </div>
     );
@@ -85,30 +82,80 @@ function App() {
     return <AuthPage onAuthSuccess={() => {}} />;
   }
 
-  if (!user?.id) {
-    return (
-    <MainLayout 
-      activeTab={activeTab}
-      onTabChange={(tab) => setActiveTab(tab as any)}
-      showProfile={activeTab === 'reports'}
-    >
-      <div>
-        {/* Add Transaction Button */}
-        {activeTab !== 'reports' && (
-          <div className="mb-6 flex justify-end">
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
-            >
-              <Plus className="h-5 w-5" />
-              <span className="font-medium">Tambah Transaksi</span>
-            </button>
-          </div>
-        )}
-      </div>
-    </MainLayout>
-    );
-  }
+  const handleSubmit = async (transactionData: Omit<Transaction, 'id'>) => {
+    try {
+      console.log('=== APP HANDLE SUBMIT START ===');
+      console.log('Transaction data received:', transactionData);
+      console.log('👤 User ID:', user?.id);
+      console.log('🔐 Is authenticated:', isAuthenticated);
+      console.log('✏️  Editing transaction:', editingTransaction?.id);
+      
+      // Additional validation before submitting
+      if (!user?.id) {
+        throw new Error('❌ User tidak ditemukan. Silakan login ulang.');
+      }
+      
+      if (!isAuthenticated) {
+        throw new Error('❌ Sesi login telah berakhir. Silakan login ulang.');
+      }
+      
+      if (editingTransaction) {
+        console.log('🔄 Updating existing transaction:', editingTransaction.id);
+        console.log('📝 Original transaction:', editingTransaction);
+        console.log('📝 Updates to apply:', transactionData);
+        
+        if (!editingTransaction.id) {
+          throw new Error('❌ ID transaksi tidak valid untuk update');
+        }
+        
+        await updateTransaction(editingTransaction.id, transactionData);
+        console.log('✅ Transaction updated successfully');
+        setEditingTransaction(null);
+      } else {
+        console.log('➕ Adding new transaction for user:', user?.id);
+        await addTransaction(transactionData);
+        console.log('✅ Transaction added successfully');
+      }
+      
+      setShowForm(false);
+      console.log('🎉 === APP HANDLE SUBMIT SUCCESS ===');
+      
+    } catch (error: any) {
+      console.error('💥 === APP HANDLE SUBMIT ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error.message);
+      
+      // More specific error messages
+      let errorMessage = 'Gagal menyimpan transaksi';
+      
+      if (error.message.includes('tidak ditemukan') || error.message.includes('sudah dihapus')) {
+        errorMessage = 'Transaksi tidak ditemukan atau sudah dihapus. Data akan dimuat ulang.';
+        // Force refresh data
+        setTimeout(() => {
+          forceRefresh();
+          setShowForm(false);
+          setEditingTransaction(null);
+        }, 1500);
+      } else if (error.message.includes('tidak memiliki akses') || error.message.includes('akses ditolak') || error.message.includes('login ulang')) {
+        errorMessage = 'Sesi login bermasalah. Silakan logout dan login ulang.';
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMessage = 'Masalah koneksi. Periksa internet Anda dan coba lagi.';
+      } else if (error.message.includes('validation') || error.message.includes('wajib')) {
+        errorMessage = error.message; // Show validation errors as-is
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Show user-friendly error message
+      alert(errorMessage);
+      
+      // Only close form for certain errors
+      if (error.message.includes('tidak ditemukan') || error.message.includes('login ulang')) {
+        setShowForm(false);
+        setEditingTransaction(null);
+      }
+    }
+  };
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -200,11 +247,11 @@ function App() {
 
   if (loading || budgetsLoading || goalsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Memuat Aplikasi</h2>
-          <p className="text-gray-600 dark:text-gray-300">Sedang menyiapkan data keuangan Anda...</p>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Memuat Aplikasi</h2>
+          <p className="text-gray-600">Sedang menyiapkan data keuangan Anda...</p>
         </div>
       </div>
     );
@@ -220,25 +267,70 @@ function App() {
   ];
 
   return (
-    <MainLayout 
-      activeTab={activeTab}
-      onTabChange={(tab) => setActiveTab(tab as any)}
-      showProfile={activeTab === 'reports'}
-    >
-      <div>
-        {/* Add Transaction Button */}
-        {activeTab !== 'reports' && (
-          <div className="mb-6 flex justify-end">
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
-            >
-              <Plus className="h-5 w-5" />
-              <span className="font-medium">Tambah Transaksi</span>
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            <div className="flex items-center space-x-4">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-3 shadow-lg">
+                <Receipt className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  Akuntansi Keuangan
+                </h1>
+                <p className="text-sm text-gray-600">Sistem manajemen keuangan personal</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setShowForm(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <Plus className="h-5 w-5" />
+                <span className="font-medium">Tambah Transaksi</span>
+              </button>
+            </div>
           </div>
-        )}
-      
+        </div>
+      </header>
+
+      {/* Navigation Tabs */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-2 border border-gray-200">
+              <div className="flex space-x-1">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
+                        activeTab === tab.id
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="hidden sm:inline">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <div className="lg:col-span-1">
+            <UserProfile />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         {/* Month Selector - Only show for dashboard and transactions */}
         {(activeTab === 'dashboard' || activeTab === 'transactions') && (
           <div className="mb-8">
@@ -291,23 +383,23 @@ function App() {
         )}
 
         {activeTab === 'reports' && (
-          <ReportsWithProfile transactions={transactions} />
+          <Reports transactions={transactions} />
         )}
 
         {activeTab === 'debts' && (
           <DebtManagement />
         )}
+      </main>
 
-        {/* Transaction Form Modal */}
-        {showForm && (
-          <TransactionForm
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            editTransaction={editingTransaction}
-          />
-        )}
-      </div>
-    </MainLayout>
+      {/* Transaction Form Modal */}
+      {showForm && (
+        <TransactionForm
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          editTransaction={editingTransaction}
+        />
+      )}
+    </div>
   );
 }
 
