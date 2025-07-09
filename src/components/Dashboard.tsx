@@ -170,7 +170,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
   return (
     <div className="space-y-8">
       {/* Header with Key Metrics */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-3xl p-8 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-700 dark:via-blue-800 dark:to-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
@@ -189,7 +189,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+            <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm font-medium">Saldo Bersih</p>
@@ -199,7 +199,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
               </div>
             </div>
             
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+            <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm font-medium">Tingkat Tabungan</p>
@@ -209,7 +209,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
               </div>
             </div>
             
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+            <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm font-medium">Rata-rata Transaksi</p>
@@ -224,14 +224,14 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
 
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">Total Pemasukan</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Pemasukan</p>
               <p className="text-2xl font-bold text-emerald-600">
                 {formatCurrency(monthlyStats.totalIncome)}
               </p>
-              <p className="text-xs text-gray-500 mt-1">+12% dari bulan lalu</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">+12% dari bulan lalu</p>
             </div>
             <div className="bg-emerald-100 rounded-2xl p-4">
               <ArrowUpCircle className="h-8 w-8 text-emerald-600" />
@@ -239,14 +239,14 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">Total Pengeluaran</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Pengeluaran</p>
               <p className="text-2xl font-bold text-red-600">
                 {formatCurrency(monthlyStats.totalExpenses)}
               </p>
-              <p className="text-xs text-gray-500 mt-1">-5% dari bulan lalu</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">-5% dari bulan lalu</p>
             </div>
             <div className="bg-red-100 rounded-2xl p-4">
               <ArrowDownCircle className="h-8 w-8 text-red-600" />
@@ -254,14 +254,14 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">Total Transaksi</p>
-              <p className="text-2xl font-bold text-gray-700">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Transaksi</p>
+              <p className="text-2xl font-bold text-gray-700 dark:text-gray-200">
                 {monthlyStats.transactionCount}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Kategori terbanyak: {monthlyStats.topCategory}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Kategori terbanyak: {monthlyStats.topCategory}</p>
             </div>
             <div className="bg-blue-100 rounded-2xl p-4">
               <Calendar className="h-8 w-8 text-blue-600" />
@@ -269,14 +269,14 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">Proyeksi Akhir Bulan</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Proyeksi Akhir Bulan</p>
               <p className={`text-2xl font-bold ${getBalanceColor(monthlyStats.netBalance * 1.2)}`}>
                 {formatCurrency(monthlyStats.netBalance * 1.2)}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Berdasarkan tren saat ini</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Berdasarkan tren saat ini</p>
             </div>
             <div className="bg-purple-100 rounded-2xl p-4">
               <TrendingUp className="h-8 w-8 text-purple-600" />
@@ -287,9 +287,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
 
       {/* Budget Tracking */}
       {budgets.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-gray-800">Pelacakan Anggaran</h3>
+            <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Pelacakan Anggaran</h3>
             <div className="bg-blue-100 rounded-xl p-2">
               <Target className="h-6 w-6 text-blue-600" />
             </div>
@@ -301,9 +301,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
               const StatusIcon = status.icon;
               
               return (
-                <div key={budget.id} className="bg-gray-50 rounded-xl p-6 hover:bg-gray-100 transition-colors">
+                <div key={budget.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-gray-800">{budget.category}</h4>
+                    <h4 className="font-semibold text-gray-800 dark:text-white">{budget.category}</h4>
                     <div className={`${status.bg} rounded-full p-2`}>
                       <StatusIcon className={`h-4 w-4 ${status.color}`} />
                     </div>
@@ -311,15 +311,15 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
                   
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Terpakai</span>
+                      <span className="text-gray-600 dark:text-gray-400">Terpakai</span>
                       <span className="font-medium">{formatCurrency(budget.spent)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Anggaran</span>
+                      <span className="text-gray-600 dark:text-gray-400">Anggaran</span>
                       <span className="font-medium">{formatCurrency(budget.amount)}</span>
                     </div>
                     
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
                       <div
                         className={`h-3 rounded-full transition-all duration-500 ${
                           budget.percentage >= 100 ? 'bg-red-500' :
@@ -333,7 +333,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
                       <span className={`font-medium ${status.color}`}>
                         {budget.percentage.toFixed(1)}% terpakai
                       </span>
-                      <span className="text-gray-600">
+                      <span className="text-gray-600 dark:text-gray-400">
                         Sisa: {formatCurrency(Math.max(budget.remaining, 0))}
                       </span>
                     </div>
@@ -348,8 +348,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
       {/* Category Breakdown & Weekly Trend */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Category Breakdown */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <h3 className="text-xl font-bold text-gray-800 mb-6">Pengeluaran per Kategori</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">Pengeluaran per Kategori</h3>
           <div className="space-y-4">
             {Object.entries(categoryStats)
               .sort((a, b) => b[1] - a[1])
@@ -367,14 +367,14 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className={`w-4 h-4 rounded-full ${colors[colorIndex]}`}></div>
-                        <span className="text-sm font-medium text-gray-700">{category}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{category}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-sm font-bold text-gray-800">{formatCurrency(amount)}</span>
-                        <span className="text-xs text-gray-500 ml-2">{percentage.toFixed(1)}%</span>
+                        <span className="text-sm font-bold text-gray-800 dark:text-white">{formatCurrency(amount)}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">{percentage.toFixed(1)}%</span>
                       </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                       <div
                         className={`${colors[colorIndex]} h-2 rounded-full transition-all duration-700`}
                         style={{ width: `${percentage}%` }}
@@ -387,8 +387,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
         </div>
 
         {/* Weekly Trend */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <h3 className="text-xl font-bold text-gray-800 mb-6">Tren Pengeluaran Mingguan</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-6">Tren Pengeluaran Mingguan</h3>
           <div className="space-y-4">
             {weeklyTrend.map((amount, index) => {
               const maxAmount = Math.max(...weeklyTrend);
@@ -397,14 +397,14 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
               return (
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Minggu {index + 1}
                     </span>
-                    <span className="text-sm font-bold text-gray-800">
+                    <span className="text-sm font-bold text-gray-800 dark:text-white">
                       {formatCurrency(amount)}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
                     <div
                       className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-700"
                       style={{ width: `${percentage}%` }}
@@ -415,10 +415,10 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
             })}
           </div>
           
-          <div className="mt-6 p-4 bg-blue-50 rounded-xl">
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
             <div className="flex items-center space-x-2">
               <TrendingUp className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">
+              <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
                 Insight: Pengeluaran tertinggi di minggu ke-{weeklyTrend.indexOf(Math.max(...weeklyTrend)) + 1}
               </span>
             </div>

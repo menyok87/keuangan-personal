@@ -30,23 +30,23 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ currentMonth, onMonthChan
   };
 
   return (
-    <div className="flex items-center justify-between bg-white rounded-xl shadow-lg p-4 border border-gray-100">
+    <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-100 dark:border-gray-700">
       <button
         onClick={() => changeMonth('prev')}
-        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
-        <ChevronLeft className="h-6 w-6 text-gray-600" />
+        <ChevronLeft className="h-6 w-6 text-gray-600 dark:text-gray-300" />
       </button>
       
-      <h2 className="text-xl font-bold text-gray-800">
+      <h2 className="text-xl font-bold text-gray-800 dark:text-white">
         {getCurrentMonthName()}
       </h2>
       
       <button
         onClick={() => changeMonth('next')}
-        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
-        <ChevronRight className="h-6 w-6 text-gray-600" />
+        <ChevronRight className="h-6 w-6 text-gray-600 dark:text-gray-300" />
       </button>
     </div>
   );
