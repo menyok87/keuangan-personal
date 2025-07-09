@@ -342,21 +342,21 @@ function App() {
         )}
 
         {activeTab === 'reports' && (
-          <Reports transactions={transactions} />
+          <ReportsWithProfile transactions={transactions} />
         )}
 
         {activeTab === 'debts' && (
           <DebtManagement />
         )}
-      </main>
 
-      {/* Transaction Form Modal */}
-      {showForm && (
-        <TransactionForm
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          editTransaction={editingTransaction}
-        />
+        {/* Transaction Form Modal */}
+        {showForm && (
+          <TransactionForm
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            editTransaction={editingTransaction}
+          />
+        )}
       </div>
     </MainLayout>
   );
