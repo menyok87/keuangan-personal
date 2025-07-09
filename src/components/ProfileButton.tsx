@@ -30,18 +30,18 @@ const ProfileButton: React.FC = () => {
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="relative p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200"
+        className="relative p-1 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200"
         title="Lihat Profil"
       >
         {avatarUrl ? (
           <img 
             src={avatarUrl} 
             alt="Profile" 
-            className="w-8 h-8 rounded-full object-cover"
+            className="w-6 h-6 rounded-full object-cover"
             onError={() => setAvatarUrl('')}
           />
         ) : (
-          <User className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+          <User className="h-4 w-4 text-gray-700 dark:text-gray-300" />
         )}
       </button>
       
