@@ -24,7 +24,17 @@ const UserProfile: React.FC = () => {
         
         if (data && !error) {
           setFullName(data.full_name || '');
-          setAvatarUrl(data.avatar_url || '');
+          
+          // Handle avatar URL - check if it's stored locally
+          if (data?.avatar_url) {
+            if (data.avatar_url.startsWith('local_storage:')) {
+              const key = data.avatar_url.replace('local_storage:', '');
+              const localAvatar = localStorage.getItem(key);
+              setAvatarUrl(localAvatar || '');
+            } else {
+              setAvatarUrl(data.avatar_url);
+            }
+          }
         }
       }
     };
