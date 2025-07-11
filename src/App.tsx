@@ -18,7 +18,7 @@ import MonthSelector from './components/MonthSelector';
 import { Transaction } from './types';
 
 function App() {
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, error: authError } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -63,6 +63,11 @@ function App() {
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Memuat Aplikasi</h2>
           <p className="text-gray-600">Sedang menyiapkan data keuangan Anda...</p>
+          {authError && (
+            <p className="text-red-600 text-sm mt-2">
+              Terjadi masalah dengan sesi login. Silakan refresh halaman.
+            </p>
+          )}
         </div>
       </div>
     );
