@@ -48,59 +48,56 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         throw new Error('Ukuran file maksimal 5MB');
       }
 
-      // Create unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      // Convert file to base64 for local storage
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const base64Data = e.target?.result as string;
+          
+          // Store the base64 data in localStorage with user ID as key
+          const avatarKey = `avatar_${user.id}`;
+          localStorage.setItem(avatarKey, base64Data);
 
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+          // Update user profile in database with a reference to local storage
+          const avatarUrl = `local_storage:${avatarKey}`;
+          
+          const { error: updateError } = await supabase
+            .from('user_profiles')
+            .update({ 
+              avatar_url: avatarUrl,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
 
-      if (uploadError) {
-        throw uploadError;
-      }
+          if (updateError) {
+            throw updateError;
+          }
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+          // Clean up old avatar from localStorage if it was stored locally
+          if (currentAvatarUrl && currentAvatarUrl.startsWith('local_storage:')) {
+            const oldKey = currentAvatarUrl.replace('local_storage:', '');
+            localStorage.removeItem(oldKey);
+          }
 
-      // Update user profile
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ 
-          avatar_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+          onAvatarUpdate(base64Data); // Pass the actual base64 data for immediate display
+          setShowUploadModal(false);
+          setPreview(null);
 
-      if (updateError) {
-        throw updateError;
-      }
-
-      // Delete old avatar if exists
-      if (currentAvatarUrl && currentAvatarUrl.includes('supabase')) {
-        const oldPath = currentAvatarUrl.split('/').pop();
-        if (oldPath) {
-          await supabase.storage
-            .from('avatars')
-            .remove([`avatars/${oldPath}`]);
+        } catch (error: any) {
+          console.error('Error saving avatar:', error);
+          throw error;
         }
-      }
+      };
 
-      onAvatarUpdate(publicUrl);
-      setShowUploadModal(false);
-      setPreview(null);
+      reader.onerror = () => {
+        throw new Error('Gagal membaca file');
+      };
+
+      reader.readAsDataURL(file);
 
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
       alert(error.message || 'Gagal mengupload avatar');
-    } finally {
       setUploading(false);
     }
   };
@@ -149,14 +146,32 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
     }
   };
 
+  // Function to get avatar URL - check if it's stored locally
+  const getAvatarUrl = (avatarUrl?: string) => {
+    if (!avatarUrl) return null;
+    
+    if (avatarUrl.startsWith('local_storage:')) {
+      const key = avatarUrl.replace('local_storage:', '');
+      return localStorage.getItem(key);
+    }
+    
+    if (avatarUrl.startsWith('data:')) {
+      return avatarUrl;
+    }
+    
+    return avatarUrl;
+  };
+
+  const displayAvatarUrl = getAvatarUrl(currentAvatarUrl);
+
   return (
     <>
       <div className="relative group">
         {/* Avatar Display */}
         <div className={`${sizeClasses[size]} rounded-full overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center relative`}>
-          {currentAvatarUrl ? (
+          {displayAvatarUrl ? (
             <img
-              src={currentAvatarUrl}
+              src={displayAvatarUrl}
               alt="Avatar"
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -201,16 +216,16 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       {/* Upload Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800">Upload Avatar</h3>
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white">Upload Avatar</h3>
                 <button
                   onClick={() => {
                     setShowUploadModal(false);
                     setPreview(null);
                   }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -219,7 +234,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
               {/* Preview */}
               {preview && (
                 <div className="mb-6">
-                  <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gray-100">
+                  <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
                     <img
                       src={preview}
                       alt="Preview"
@@ -233,24 +248,24 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
               <div
                 className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
                   dragOver 
-                    ? 'border-blue-500 bg-blue-50' 
-                    : 'border-gray-300 hover:border-gray-400'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                 }`}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
               >
-                <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 mb-2">
+                <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400 dark:text-gray-500" />
+                <p className="text-gray-600 dark:text-gray-300 mb-2">
                   Drag & drop gambar di sini atau
                 </p>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                 >
                   pilih file
                 </button>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   PNG, JPG, GIF hingga 5MB
                 </p>
               </div>
@@ -263,7 +278,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
                       setShowUploadModal(false);
                       setPreview(null);
                     }}
-                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium"
+                    className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
                     disabled={uploading}
                   >
                     Batal
