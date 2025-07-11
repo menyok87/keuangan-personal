@@ -30,7 +30,7 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ currentMonth, onMonthChan
   };
 
   return (
-    <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-100 dark:border-gray-700">
+    <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-100 dark:border-gray-700 transition-colors">
       <button
         onClick={() => changeMonth('prev')}
         className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
