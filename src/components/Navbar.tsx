@@ -150,14 +150,15 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
                 <div className="py-2">
                   <button
                     onClick={() => setIsProfileModalOpen(true)}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2 transition-colors"
                   >
                     <User className="h-4 w-4" />
                     <span>Profil Saya</span>
                   </button>
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                   <button
                     onClick={handleSignOut}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-2"
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-2 transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Keluar</span>

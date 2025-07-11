@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Calendar, MapPin, Briefcase, Phone, Shield, Activity, FileText, Edit2, Save, X } from 'lucide-react';
+import { User, Mail, Calendar, MapPin, Briefcase, Phone, Shield, Activity, FileText, Edit2, Save, X, LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import AvatarUpload from './AvatarUpload';
@@ -9,7 +9,7 @@ interface ProfileSectionProps {
 }
 
 const ProfileSection: React.FC<ProfileSectionProps> = ({ className = '' }) => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     fullName: '',
@@ -82,6 +82,18 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ className = '' }) => {
       month: 'long',
       year: 'numeric'
     });
+  };
+
+  const handleSignOut = async () => {
+    if (window.confirm('Apakah Anda yakin ingin keluar?')) {
+      try {
+        await signOut();
+        alert('Anda berhasil keluar');
+      } catch (error) {
+        console.error('Error signing out:', error);
+        alert('Gagal keluar. Silakan coba lagi.');
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -385,6 +397,17 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ className = '' }) => {
               <div className="text-lg font-bold text-orange-600 dark:text-orange-400">{stats.debtCount}</div>
               <div className="text-xs text-orange-600 dark:text-orange-400">Hutang/Piutang</div>
             </div>
+          </div>
+          
+          {/* Logout Button */}
+          <div className="pt-3 border-t border-gray-100 dark:border-gray-700 mt-3">
+            <button 
+              onClick={handleSignOut}
+              className="w-full py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Keluar</span>
+            </button>
           </div>
         </div>
       )}

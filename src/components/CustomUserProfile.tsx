@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, LogOut, Edit2, Save, X, Mail, Calendar, Shield, Activity, MapPin, Briefcase, Phone } from 'lucide-react';
+import { User, LogOut, Edit2, Save, X, Mail, Calendar, Shield, Activity, MapPin, Briefcase, Phone, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import AvatarUpload from './AvatarUpload';
 import { supabase } from '../lib/supabase';
@@ -56,8 +56,14 @@ const CustomUserProfile: React.FC<CustomUserProfileProps> = ({ onClose, isModal 
   }, [user]);
 
   const handleSignOut = async () => {
-    if (window.confirm('Apakah Anda yakin ingin keluar?')) {
-      await signOut();
+    if (window.confirm('Apakah Anda yakin ingin keluar dari akun?')) {
+      try {
+        await signOut();
+        alert('Anda berhasil keluar dari akun');
+      } catch (error) {
+        console.error('Error signing out:', error);
+        alert('Gagal keluar dari akun. Silakan coba lagi.');
+      }
     }
   };
 
@@ -207,6 +213,24 @@ const CustomUserProfile: React.FC<CustomUserProfileProps> = ({ onClose, isModal 
             <span className="font-mono text-xs bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded text-gray-700 dark:text-gray-300 truncate max-w-full">
               {user?.id?.slice(0, 12)}...
             </span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Logout Button */}
+      <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center justify-center space-x-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 px-4 py-3 rounded-lg transition-colors border border-red-200 dark:border-red-800"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="font-medium">Keluar dari Akun</span>
+        </button>
+        
+        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300">
+          <div className="flex items-start space-x-2">
+            <AlertCircle className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+            <p>Dengan keluar, Anda akan diarahkan ke halaman login. Data Anda tetap aman dan tersimpan di server.</p>
           </div>
         </div>
       </div>
