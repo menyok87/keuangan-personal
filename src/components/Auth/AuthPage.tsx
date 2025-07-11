@@ -103,17 +103,6 @@ const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
           )}
           
           {/* Help Text */}
-          <div className="mt-6 text-center">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                <strong>💡 Tips:</strong> Jika mengalami masalah pendaftaran, coba gunakan email lain atau login dengan akun admin:
-              </p>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                Email: <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">admin@akuntansi.com</code> | 
-                Password: <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">admin123</code>
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

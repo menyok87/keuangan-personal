@@ -12,9 +12,6 @@ import {
   Bell,
   HelpCircle,
   TrendingUp,
-  Moon,
-  Sun
-  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import DarkModeToggle from './DarkModeToggle';

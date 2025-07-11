@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings, CreditCard, User, Moon, Sun } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSupabaseTransactions } from './hooks/useSupabaseTransactions';
 import { useSupabaseBudgets } from './hooks/useSupabaseBudgets';
 import { useSupabaseGoals } from './hooks/useSupabaseGoals';
-import { useSupabaseDebts } from './hooks/useSupabaseDebts';
 import { useDarkMode } from './hooks/useDarkMode';
 import AuthPage from './components/Auth/AuthPage';
 import ProfileSection from './components/ProfileSection';
@@ -57,17 +56,6 @@ function App() {
     deleteGoal
   } = useSupabaseGoals(user?.id);
 
-  const {
-    debts,
-    loading: debtsLoading,
-    error: debtsError,
-    addDebt,
-    updateDebt,
-    deleteDebt: removeDebt,
-    addPayment
-  } = useSupabaseDebts(user?.id);
-
-  // Show auth page if not authenticated
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
@@ -86,11 +74,6 @@ function App() {
 
   const handleSubmit = async (transactionData: Omit<Transaction, 'id'>) => {
     try {
-      console.log('=== APP HANDLE SUBMIT START ===');
-      console.log('Transaction data received:', transactionData);
-      console.log('👤 User ID:', user?.id);
-      console.log('🔐 Is authenticated:', isAuthenticated);
-      console.log('✏️  Editing transaction:', editingTransaction?.id);
       
       // Additional validation before submitting
       if (!user?.id) {
@@ -102,30 +85,20 @@ function App() {
       }
       
       if (editingTransaction) {
-        console.log('🔄 Updating existing transaction:', editingTransaction.id);
-        console.log('📝 Original transaction:', editingTransaction);
-        console.log('📝 Updates to apply:', transactionData);
         
         if (!editingTransaction.id) {
           throw new Error('❌ ID transaksi tidak valid untuk update');
         }
         
         await updateTransaction(editingTransaction.id, transactionData);
-        console.log('✅ Transaction updated successfully');
         setEditingTransaction(null);
       } else {
-        console.log('➕ Adding new transaction for user:', user?.id);
         await addTransaction(transactionData);
-        console.log('✅ Transaction added successfully');
       }
       
       setShowForm(false);
-      console.log('🎉 === APP HANDLE SUBMIT SUCCESS ===');
       
     } catch (error: any) {
-      console.error('💥 === APP HANDLE SUBMIT ERROR ===');
-      console.error('Error details:', error);
-      console.error('Error message:', error.message);
       
       // More specific error messages
       let errorMessage = 'Gagal menyimpan transaksi';
@@ -168,9 +141,7 @@ function App() {
     if (window.confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
       try {
         await deleteTransaction(id);
-        console.log('Transaction deleted successfully');
       } catch (error: any) {
-        console.error('Error deleting transaction:', error);
         alert(error.message || 'Gagal menghapus transaksi');
       }
     }
@@ -185,9 +156,7 @@ function App() {
   const handleAddBudget = async (budget: any) => {
     try {
       await addBudget(budget);
-      console.log('✅ Budget added successfully');
     } catch (error: any) {
-      console.error('❌ Error adding budget:', error);
       alert(error.message || 'Gagal menambah anggaran');
     }
   };
@@ -195,9 +164,7 @@ function App() {
   const handleUpdateBudget = async (id: string, updates: any) => {
     try {
       await updateBudget(id, updates);
-      console.log('✅ Budget updated successfully');
     } catch (error: any) {
-      console.error('❌ Error updating budget:', error);
       alert(error.message || 'Gagal mengupdate anggaran');
     }
   };
@@ -206,9 +173,7 @@ function App() {
     if (window.confirm('Apakah Anda yakin ingin menghapus anggaran ini?')) {
       try {
         await deleteBudget(id);
-        console.log('✅ Budget deleted successfully');
       } catch (error: any) {
-        console.error('❌ Error deleting budget:', error);
         alert(error.message || 'Gagal menghapus anggaran');
       }
     }
@@ -304,7 +269,7 @@ function App() {
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 <Plus className="h-5 w-5" />
-                <span className="font-medium">Tambah Transaksi</span>
+                <span className="font-medium">Tambah</span>
               </button>
             </div>
           </div>
