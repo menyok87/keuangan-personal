@@ -19,6 +19,23 @@ function DarkModeInitializer() {
   
   return <App />;
 }
+import { useDarkMode } from './hooks/useDarkMode';
+
+// DarkModeInitializer component to set up dark mode on initial render
+function DarkModeInitializer() {
+  const { isDarkMode } = useDarkMode();
+  
+  useEffect(() => {
+    // This effect runs once on mount to set the initial dark mode class
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+  
+  return <App />;
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
