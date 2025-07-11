@@ -11,11 +11,12 @@ import {
   Settings,
   Bell,
   HelpCircle,
-  TrendingUp
+  TrendingUp,
+  Moon,
+  Sun
   TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import DarkModeToggle from './DarkModeToggle';
 import DarkModeToggle from './DarkModeToggle';
 import ProfileModal from './ProfileModal';
 import { supabase } from '../lib/supabase';
@@ -110,9 +111,6 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
           {/* User Profile and Actions */}
           <div className="flex items-center space-x-4">
             <DarkModeToggle />
-            
-            <DarkModeToggle />
-            
             <button
               className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg relative"
             >
