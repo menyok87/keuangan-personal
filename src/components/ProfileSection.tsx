@@ -20,7 +20,6 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ className = '' }) => {
     bio: ''
   });
   const [loading, setLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     transactionCount: 0,
     budgetCount: 0,
