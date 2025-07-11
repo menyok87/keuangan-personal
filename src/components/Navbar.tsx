@@ -64,7 +64,8 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
     { id: 'budget', label: 'Anggaran', icon: Target },
     { id: 'goals', label: 'Target', icon: Settings },
     { id: 'debts', label: 'Hutang', icon: CreditCard },
-    { id: 'reports', label: 'Laporan', icon: BarChart3 }
+    { id: 'reports', label: 'Laporan', icon: BarChart3 },
+    { id: 'profile', label: 'Profil', icon: User }
   ];
 
   return (

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings, CreditCard } from 'lucide-react';
+import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings, CreditCard, User } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useSupabaseTransactions } from './hooks/useSupabaseTransactions';
 import { useSupabaseBudgets } from './hooks/useSupabaseBudgets';
 import { useSupabaseGoals } from './hooks/useSupabaseGoals';
 import { useSupabaseDebts } from './hooks/useSupabaseDebts';
 import AuthPage from './components/Auth/AuthPage';
-import UserProfile from './components/UserProfile';
+import ProfileSection from './components/ProfileSection';
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
 import TransactionList from './components/TransactionList';
@@ -25,7 +25,7 @@ function App() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget' | 'goals' | 'debts' | 'reports'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget' | 'goals' | 'debts' | 'reports' | 'profile'>('dashboard');
 
   const {
     transactions,
@@ -263,7 +263,8 @@ function App() {
     { id: 'budget', label: 'Anggaran', icon: Target },
     { id: 'goals', label: 'Target', icon: Settings },
     { id: 'debts', label: 'Hutang', icon: CreditCard },
-    { id: 'reports', label: 'Laporan', icon: BarChart3 }
+    { id: 'reports', label: 'Laporan', icon: BarChart3 },
+    { id: 'profile', label: 'Profil', icon: User }
   ];
 
   return (
@@ -300,7 +301,7 @@ function App() {
       {/* Navigation Tabs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-4">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-2 border border-gray-200">
               <div className="flex space-x-1">
                 {tabs.map((tab) => {
@@ -322,9 +323,6 @@ function App() {
                 })}
               </div>
             </div>
-          </div>
-          <div className="lg:col-span-1">
-            <UserProfile />
           </div>
         </div>
       </div>
@@ -384,6 +382,13 @@ function App() {
 
         {activeTab === 'reports' && (
           <Reports transactions={transactions} />
+        )}
+        
+        {activeTab === 'profile' && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Profil Pengguna</h2>
+            <ProfileSection />
+          </div>
         )}
 
         {activeTab === 'debts' && (
