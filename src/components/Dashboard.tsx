@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
   PieChart,
   Calendar,
   ArrowUpCircle,
@@ -12,10 +10,9 @@ import {
   CheckCircle,
   Clock,
   BarChart3,
-  Wallet,
-  CreditCard
+  Wallet
 } from 'lucide-react';
-import { Transaction, MonthlyStats, Budget } from '../types';
+import { Transaction, MonthlyStats } from '../types';
 import { useSupabaseBudgets } from '../hooks/useSupabaseBudgets';
 import { useAuth } from '../hooks/useAuth';
 
@@ -128,11 +125,6 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
             <h4 className="font-medium text-blue-800 mb-2">🔧 Troubleshooting Guide</h4>
             <div className="text-sm text-blue-700 space-y-2">
               <p><strong>1. Buka Console Browser (F12)</strong> - Lihat log detail untuk debugging</p>
-              <p><strong>2. Test dengan Admin Account:</strong></p>
-              <div className="ml-4 bg-blue-100 p-2 rounded text-xs">
-                <p>Email: admin@akuntansi.com</p>
-                <p>Password: admin123</p>
-              </div>
               <p><strong>3. Langkah Troubleshooting:</strong></p>
               <div className="ml-4 space-y-1 text-xs">
                 <p>• Logout dan login ulang</p>
