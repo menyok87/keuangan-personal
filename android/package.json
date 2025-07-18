@@ -16,7 +16,10 @@
     "clean": "npx react-native clean-project-auto",
     "clean:full": "npx react-native clean-project-auto && npx react-native start --reset-cache --port=8081",
     "android:dev": "npx react-native start --port=8081 & npx react-native run-android",
-    "postinstall": "npx react-native-asset"
+    "postinstall": "npx react-native-asset",
+    "setup:java": "chmod +x scripts/setup-java.sh && ./scripts/setup-java.sh",
+    "setup:java:windows": "scripts\\setup-java.bat",
+    "check:env": "echo 'Checking environment...' && java -version && echo 'JAVA_HOME:' $JAVA_HOME"
   },
   "dependencies": {
     "react": "18.2.0",
