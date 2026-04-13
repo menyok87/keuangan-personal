@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS user_profiles (
   id          UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  email       TEXT NOT NULL DEFAULT '',
   full_name   TEXT,
   avatar_url  TEXT,
   occupation  TEXT,
@@ -49,8 +50,8 @@ CREATE TABLE IF NOT EXISTS user_profiles (
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO user_profiles (id, full_name)
-  VALUES (NEW.id, NULL)
+  INSERT INTO user_profiles (id, email, full_name)
+  VALUES (NEW.id, NEW.email, NULL)
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
