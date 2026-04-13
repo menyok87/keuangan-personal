@@ -329,7 +329,14 @@ app.get('/api/budgets', authenticateToken, async (req, res) => {
       ORDER BY b.created_at DESC`,
       [req.user.id]
     );
-    res.json(result.rows);
+    const budgets = result.rows.map(row => ({
+      ...row,
+      amount: Number(row.amount),
+      spent: Number(row.spent),
+      remaining: Number(row.remaining),
+      percentage: Number(row.percentage),
+    }));
+    res.json(budgets);
   } catch (err) {
     console.error('Get budgets error:', err.message);
     res.status(500).json({ error: 'Gagal memuat anggaran.' });
