@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, UserPlus } from 'lucide-react';
-import { auth } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface SignupFormProps {
   onSuccess: () => void;
@@ -8,6 +8,7 @@ interface SignupFormProps {
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLogin }) => {
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -37,50 +38,15 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLogin }) =
     }
 
     try {
-      const { data, error } = await auth.signUp(
-        formData.email, 
-        formData.password,
-        { 
-          full_name: formData.fullName,
-          email_confirm: false
-        }
-      );
-      
+      const { data, error } = await signUp(formData.email, formData.password, formData.fullName);
+
       if (error) {
-        console.error('Signup error:', error);
-        
-        // Handle specific error cases
-        if (error.message.includes('User already registered') || error.message.includes('already been registered')) {
-          setError('Email sudah terdaftar. Silakan gunakan email lain atau login.');
-        } else if (error.message.includes('confirmation') || error.message.includes('confirm')) {
-          // If it's a confirmation error, try to sign in directly
-          setError('Mencoba login otomatis...');
-          
-          try {
-            const { data: loginData, error: loginError } = await auth.signIn(formData.email, formData.password);
-            if (loginData.user && !loginError) {
-              onSuccess();
-              return;
-            } else {
-              setError('Akun berhasil dibuat tetapi perlu konfirmasi email. Silakan cek email Anda atau coba login langsung.');
-            }
-          } catch (loginErr) {
-            setError('Akun berhasil dibuat. Silakan coba login dengan email dan password yang sama.');
-          }
-        } else if (error.message.includes('Invalid email')) {
-          setError('Format email tidak valid');
-        } else if (error.message.includes('Password')) {
-          setError('Password terlalu lemah. Gunakan minimal 6 karakter.');
-        } else {
-          setError('Terjadi kesalahan saat mendaftar. Silakan coba lagi atau gunakan email lain.');
-        }
-      } else if (data?.user) {
-        console.log('User created successfully:', data.user);
+        setError(error.message || 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.');
+      } else if (data) {
         onSuccess();
       }
-    } catch (err) {
-      console.error('Signup error:', err);
-      setError('Terjadi kesalahan sistem. Silakan coba lagi dalam beberapa saat.');
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan sistem. Silakan coba lagi dalam beberapa saat.');
     } finally {
       setLoading(false);
     }

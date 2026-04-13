@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
-import { auth } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -8,6 +8,7 @@ interface LoginFormProps {
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToSignup }) => {
+  const { signIn } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -22,29 +23,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToSignup }) =>
     setError('');
 
     try {
-      const { data, error } = await auth.signIn(formData.email, formData.password);
-      
+      const { data, error } = await signIn(formData.email, formData.password);
+
       if (error) {
-        console.error('Login error:', error);
-        
-        if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
-          setError('Email atau password salah');
-        } else if (error.message.includes('Email not confirmed') || error.message.includes('email_not_confirmed')) {
-          setError('Email belum dikonfirmasi. Silakan cek email Anda atau hubungi administrator.');
-        } else if (error.message.includes('Too many requests')) {
-          setError('Terlalu banyak percobaan login. Silakan tunggu beberapa menit.');
-        } else if (error.message.includes('signup_disabled')) {
-          setError('Pendaftaran sedang dinonaktifkan. Silakan hubungi administrator.');
-        } else {
-          setError('Gagal login. Periksa email dan password Anda.');
-        }
-      } else if (data.user) {
-        console.log('Login successful:', data.user);
+        setError(error.message || 'Gagal login. Periksa email dan password Anda.');
+      } else if (data) {
         onSuccess();
       }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Terjadi kesalahan sistem. Silakan coba lagi.');
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan sistem. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }

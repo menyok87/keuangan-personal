@@ -1,76 +1,95 @@
 import { useState, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
-import { auth } from '../lib/supabase';
+import { AppUser, api, authApi, tokenStorage, userStorage } from '../lib/api';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get initial user
-    const getUser = async () => {
-      try {
-        const { user, error } = await auth.getCurrentUser();
-        if (error) {
-          console.warn('Auth error:', error);
-          setError(error.message);
-        } else {
-          setError(null);
-        }
-        setUser(user);
-      } catch (error: any) {
-        console.warn('Auth initialization error:', error);
-        setError(error.message);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+    // Restore sesi dari localStorage saat mount
+    const storedUser = userStorage.get();
+    const token = tokenStorage.get();
+    if (storedUser && token) {
+      // Tambahkan shim user_metadata untuk komponen lama
+      setUser({
+        ...storedUser,
+        user_metadata: { full_name: storedUser.full_name }
+      });
+    }
+    setLoading(false);
+
+    // Listen untuk forced logout dari api.ts (401 response)
+    const handleLogout = () => {
+      setUser(null);
+      setError(null);
     };
-
-    getUser();
-
-    // Listen for auth changes
-    const { data: { subscription } } = auth.onAuthStateChange(async (event, session) => {
-      try {
-        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-          setError(null);
-        }
-        
-        if (event === 'SIGNED_OUT') {
-          setUser(null);
-        } else {
-          setUser(session?.user ?? null);
-        }
-      } catch (error: any) {
-        console.warn('Auth state change error:', error);
-        setError(error.message);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    window.addEventListener('auth:logout', handleLogout);
+    return () => window.removeEventListener('auth:logout', handleLogout);
   }, []);
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const data = await authApi.login(email, password);
+      tokenStorage.set(data.token);
+      const appUser: AppUser = {
+        ...data.user,
+        user_metadata: { full_name: data.user.full_name }
+      };
+      userStorage.set(appUser);
+      setUser(appUser);
+      setError(null);
+      return { data, error: null };
+    } catch (err: any) {
+      setError(err.message);
+      return { data: null, error: err };
+    }
+  };
+
+  const signUp = async (email: string, password: string, full_name?: string) => {
+    try {
+      const data = await authApi.register(email, password, full_name);
+      tokenStorage.set(data.token);
+      const appUser: AppUser = {
+        ...data.user,
+        user_metadata: { full_name: data.user.full_name }
+      };
+      userStorage.set(appUser);
+      setUser(appUser);
+      setError(null);
+      return { data, error: null };
+    } catch (err: any) {
+      setError(err.message);
+      return { data: null, error: err };
+    }
+  };
 
   const signOut = async () => {
     try {
-      setLoading(true);
-      const { error } = await auth.signOut();
-      if (!error) {
-        setUser(null);
-        setError(null);
-      }
-      return { error };
-    } catch (error: any) {
-      console.warn('Sign out error:', error);
-      // Even if sign out fails, clear local state
+      tokenStorage.remove();
       setUser(null);
       setError(null);
-      return { error };
-    } finally {
-      setLoading(false);
+      return { error: null };
+    } catch (err: any) {
+      // Tetap clear state meski ada error
+      setUser(null);
+      setError(null);
+      return { error: err };
+    }
+  };
+
+  // Update user di state & storage (untuk setelah update profil)
+  const refreshUser = async () => {
+    try {
+      const data = await api.get('/auth/me');
+      const appUser: AppUser = {
+        ...data.user,
+        user_metadata: { full_name: data.user.full_name }
+      };
+      userStorage.set(appUser);
+      setUser(appUser);
+    } catch {
+      // Ignore refresh errors
     }
   };
 
@@ -78,7 +97,10 @@ export const useAuth = () => {
     user,
     loading,
     error,
+    signIn,
+    signUp,
     signOut,
+    refreshUser,
     isAuthenticated: !!user
   };
 };

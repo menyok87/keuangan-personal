@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings, CreditCard, User, Moon, Sun } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
-import { useSupabaseTransactions } from './hooks/useSupabaseTransactions';
-import { useSupabaseBudgets } from './hooks/useSupabaseBudgets';
-import { useSupabaseGoals } from './hooks/useSupabaseGoals';
+import { useTransactions } from './hooks/useTransactions';
+import { useBudgets } from './hooks/useBudgets';
+import { useGoals } from './hooks/useGoals';
 import { useDarkMode } from './hooks/useDarkMode';
 import AuthPage from './components/Auth/AuthPage';
 import ProfileSection from './components/ProfileSection';
@@ -36,7 +36,7 @@ function App() {
     updateTransaction,
     deleteTransaction,
     forceRefresh
-  } = useSupabaseTransactions(user?.id);
+  } = useTransactions();
 
   const {
     budgets,
@@ -45,7 +45,7 @@ function App() {
     addBudget,
     updateBudget,
     deleteBudget
-  } = useSupabaseBudgets(user?.id);
+  } = useBudgets();
 
   const {
     goals,
@@ -54,7 +54,7 @@ function App() {
     addGoal,
     updateGoal,
     deleteGoal
-  } = useSupabaseGoals(user?.id);
+  } = useGoals();
 
   if (authLoading) {
     return (

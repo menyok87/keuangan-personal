@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, LogOut, Edit2, Save, X, Mail, Calendar, Shield, Activity, MapPin, Briefcase, Phone, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import AvatarUpload from './AvatarUpload';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 interface CustomUserProfileProps {
   onClose?: () => void;
@@ -28,22 +28,15 @@ const CustomUserProfile: React.FC<CustomUserProfileProps> = ({ onClose, isModal 
       if (user) {
         setLoading(true);
         try {
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-          
-          if (data && !error) {
-            setProfileData({
-              fullName: data.full_name || '',
-              avatarUrl: data.avatar_url || '',
-              occupation: data.occupation || '',
-              phone: data.phone || '',
-              location: data.location || '',
-              bio: data.bio || ''
-            });
-          }
+          const data = await api.get('/profile');
+          setProfileData({
+            fullName: data.full_name || '',
+            avatarUrl: data.avatar_url || '',
+            occupation: data.occupation || '',
+            phone: data.phone || '',
+            location: data.location || '',
+            bio: data.bio || ''
+          });
         } catch (error) {
           console.error('Error fetching profile:', error);
         } finally {
@@ -51,7 +44,7 @@ const CustomUserProfile: React.FC<CustomUserProfileProps> = ({ onClose, isModal 
         }
       }
     };
-    
+
     fetchProfile();
   }, [user]);
 
@@ -69,30 +62,22 @@ const CustomUserProfile: React.FC<CustomUserProfileProps> = ({ onClose, isModal 
 
   const handleSave = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ 
-          full_name: profileData.fullName,
-          occupation: profileData.occupation,
-          phone: profileData.phone,
-          location: profileData.location,
-          bio: profileData.bio,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-      
-      if (error) {
-        throw error;
-      }
-      
+      await api.put('/profile', {
+        full_name: profileData.fullName,
+        occupation: profileData.occupation,
+        phone: profileData.phone,
+        location: profileData.location,
+        bio: profileData.bio
+      });
+
       setIsEditing(false);
       alert('Profil berhasil diperbarui!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      alert('Gagal mengupdate profil');
+      alert(error.message || 'Gagal mengupdate profil');
     } finally {
       setLoading(false);
     }

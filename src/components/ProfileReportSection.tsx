@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Calendar, MapPin, Briefcase, Phone, Shield, Activity, FileText } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import AvatarUpload from './AvatarUpload';
 
 const ProfileReportSection: React.FC = () => {
@@ -27,38 +27,27 @@ const ProfileReportSection: React.FC = () => {
     const fetchProfile = async () => {
       if (user) {
         try {
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-          
-          if (data && !error) {
-            setProfileData({
-              fullName: data.full_name || '',
-              avatarUrl: data.avatar_url || '',
-              occupation: data.occupation || '',
-              phone: data.phone || '',
-              location: data.location || '',
-              bio: data.bio || ''
-            });
-          }
-          
-          // Fetch stats
-          const [transRes, budgetRes, goalRes, debtRes] = await Promise.all([
-            supabase.from('transactions').select('id', { count: 'exact' }).eq('user_id', user.id),
-            supabase.from('budgets').select('id', { count: 'exact' }).eq('user_id', user.id),
-            supabase.from('financial_goals').select('id', { count: 'exact' }).eq('user_id', user.id),
-            supabase.from('debts').select('id', { count: 'exact' }).eq('user_id', user.id)
+          const [profileRes, statsRes] = await Promise.all([
+            api.get('/profile'),
+            api.get('/profile/stats')
           ]);
-          
-          setStats({
-            transactionCount: transRes.count || 0,
-            budgetCount: budgetRes.count || 0,
-            goalCount: goalRes.count || 0,
-            debtCount: debtRes.count || 0
+
+          setProfileData({
+            fullName: profileRes.full_name || '',
+            avatarUrl: profileRes.avatar_url || '',
+            occupation: profileRes.occupation || '',
+            phone: profileRes.phone || '',
+            location: profileRes.location || '',
+            bio: profileRes.bio || ''
           });
-          
+
+          setStats({
+            transactionCount: statsRes.transaction_count || 0,
+            budgetCount: statsRes.budget_count || 0,
+            goalCount: statsRes.goal_count || 0,
+            debtCount: statsRes.debt_count || 0
+          });
+
         } catch (error) {
           console.error('Error fetching profile:', error);
         } finally {
@@ -66,7 +55,7 @@ const ProfileReportSection: React.FC = () => {
         }
       }
     };
-    
+
     fetchProfile();
   }, [user]);
 

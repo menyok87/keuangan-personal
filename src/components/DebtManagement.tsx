@@ -16,7 +16,7 @@ import {
   Filter
 } from 'lucide-react';
 import { Debt, DebtSummary } from '../types/debt';
-import { useSupabaseDebts } from '../hooks/useSupabaseDebts';
+import { useDebts } from '../hooks/useDebts';
 import { useAuth } from '../hooks/useAuth';
 import DebtForm from './DebtForm';
 import PaymentForm from './PaymentForm';
@@ -24,7 +24,7 @@ import DebtReports from './DebtReports';
 
 const DebtManagement: React.FC = () => {
   const { user } = useAuth();
-  const { debts, loading, error, addDebt, updateDebt, deleteDebt, addPayment } = useSupabaseDebts(user?.id);
+  const { debts, loading, error, addDebt, updateDebt, deleteDebt, addPayment } = useDebts();
   const [showForm, setShowForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
