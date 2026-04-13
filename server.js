@@ -21,6 +21,10 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'keuangan_personal',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD,
+  max: 10,
+  connectionTimeoutMillis: 10000,  // gagal setelah 10 detik jika DB tidak tersedia
+  idleTimeoutMillis: 30000,
+  statement_timeout: 15000,        // query timeout 15 detik
 });
 
 // Test database connection on startup
