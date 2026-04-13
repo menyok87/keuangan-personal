@@ -16,7 +16,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import DarkModeToggle from './DarkModeToggle';
 import ProfileModal from './ProfileModal';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 interface NavbarProps {
   activeTab: string;
@@ -34,21 +34,14 @@ const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
     const fetchProfile = async () => {
       if (user) {
         try {
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .select('avatar_url')
-            .eq('id', user.id)
-            .single();
-          
-          if (data && !error) {
-            setAvatarUrl(data.avatar_url || '');
-          }
+          const data = await api.get('/profile');
+          setAvatarUrl(data.avatar_url || '');
         } catch (error) {
           console.error('Error fetching profile:', error);
         }
       }
     };
-    
+
     fetchProfile();
   }, [user]);
 

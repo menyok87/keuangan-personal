@@ -1,58 +1,119 @@
 import { useState, useEffect } from 'react';
+import { api, tokenStorage } from '../lib/api';
 import { Transaction } from '../types';
 
 export const useTransactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load transactions from localStorage on mount
   useEffect(() => {
-    const savedTransactions = localStorage.getItem('accounting-transactions');
-    if (savedTransactions) {
-      setTransactions(JSON.parse(savedTransactions));
+    if (tokenStorage.get()) {
+      fetchTransactions();
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  // Save transactions to localStorage whenever transactions change
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('accounting-transactions', JSON.stringify(transactions));
+  const fetchTransactions = async () => {
+    try {
+      setError(null);
+      const data = await api.get('/transactions');
+      setTransactions(data || []);
+    } catch (err: any) {
+      setError(`Gagal memuat transaksi: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-  }, [transactions, loading]);
-
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    setTransactions(prev => [...prev, newTransaction]);
   };
 
-  const updateTransaction = (id: string, updates: Partial<Transaction>) => {
-    setTransactions(prev => prev.map(transaction => 
-      transaction.id === id 
-        ? { ...transaction, ...updates, updated_at: new Date().toISOString() }
-        : transaction
-    ));
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!transaction.amount || transaction.amount <= 0) throw new Error('Jumlah transaksi harus lebih dari 0');
+    if (!transaction.description?.trim()) throw new Error('Deskripsi transaksi wajib diisi');
+    if (!transaction.category?.trim()) throw new Error('Kategori transaksi wajib dipilih');
+    if (!transaction.type || !['income', 'expense'].includes(transaction.type)) throw new Error('Tipe transaksi wajib dipilih');
+    if (!transaction.date) throw new Error('Tanggal transaksi wajib diisi');
+
+    try {
+      const payload = {
+        amount: Number(transaction.amount),
+        description: transaction.description.trim(),
+        category: transaction.category.trim(),
+        subcategory: transaction.subcategory?.trim() || null,
+        type: transaction.type,
+        date: transaction.date,
+        payment_method: (transaction as any).payment_method || (transaction as any).paymentMethod || 'cash',
+        tags: Array.isArray(transaction.tags) ? transaction.tags : [],
+        notes: transaction.notes?.trim() || null,
+        location: transaction.location?.trim() || null,
+        is_recurring: Boolean(transaction.is_recurring),
+        recurring_frequency: transaction.is_recurring ? transaction.recurring_frequency : null
+      };
+
+      const data = await api.post('/transactions', payload);
+      setTransactions(prev => [data, ...prev]);
+      setError(null);
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Gagal menambah transaksi');
+      throw err;
+    }
   };
 
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(transaction => transaction.id !== id));
+  const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
+    if (updates.amount !== undefined && updates.amount <= 0) throw new Error('Jumlah transaksi harus lebih dari 0');
+
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.amount !== undefined) payload.amount = Number(updates.amount);
+      if (updates.description !== undefined) payload.description = updates.description.trim();
+      if (updates.category !== undefined) payload.category = updates.category.trim();
+      if (updates.subcategory !== undefined) payload.subcategory = updates.subcategory?.trim() || null;
+      if (updates.type !== undefined) payload.type = updates.type;
+      if (updates.date !== undefined) payload.date = updates.date;
+      if ((updates as any).paymentMethod !== undefined) payload.payment_method = (updates as any).paymentMethod;
+      if ((updates as any).payment_method !== undefined) payload.payment_method = (updates as any).payment_method;
+      if (updates.notes !== undefined) payload.notes = updates.notes?.trim() || null;
+      if (updates.location !== undefined) payload.location = updates.location?.trim() || null;
+      if (updates.tags !== undefined) payload.tags = Array.isArray(updates.tags) ? updates.tags : [];
+      if (updates.is_recurring !== undefined) payload.is_recurring = Boolean(updates.is_recurring);
+      if (updates.recurring_frequency !== undefined) payload.recurring_frequency = updates.is_recurring ? updates.recurring_frequency : null;
+
+      const data = await api.put(`/transactions/${id}`, payload);
+      setTransactions(prev => prev.map(t => t.id === id ? data : t));
+      setError(null);
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Gagal mengupdate transaksi');
+      throw err;
+    }
   };
 
-  const getTransactionById = (id: string) => {
-    return transactions.find(transaction => transaction.id === id);
+  const deleteTransaction = async (id: string) => {
+    try {
+      await api.delete(`/transactions/${id}`);
+      setTransactions(prev => prev.filter(t => t.id !== id));
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Gagal menghapus transaksi');
+      throw err;
+    }
+  };
+
+  const forceRefresh = async () => {
+    setLoading(true);
+    setError(null);
+    await fetchTransactions();
   };
 
   return {
     transactions,
     loading,
+    error,
     addTransaction,
     updateTransaction,
     deleteTransaction,
-    getTransactionById
+    refetch: fetchTransactions,
+    forceRefresh
   };
 };

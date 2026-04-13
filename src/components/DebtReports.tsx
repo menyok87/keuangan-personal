@@ -14,12 +14,12 @@ import {
   DollarSign
 } from 'lucide-react';
 import { Debt } from '../types/debt';
-import { useSupabaseDebts } from '../hooks/useSupabaseDebts';
+import { useDebts } from '../hooks/useDebts';
 import { useAuth } from '../hooks/useAuth';
 
 const DebtReports: React.FC = () => {
   const { user } = useAuth();
-  const { debts, loading, error } = useSupabaseDebts(user?.id);
+  const { debts, loading, error } = useDebts();
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [reportType, setReportType] = useState<'overview' | 'status' | 'timeline'>('overview');
 

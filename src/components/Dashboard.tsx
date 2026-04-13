@@ -13,7 +13,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { Transaction, MonthlyStats } from '../types';
-import { useSupabaseBudgets } from '../hooks/useSupabaseBudgets';
+import { useBudgets } from '../hooks/useBudgets';
 import { useAuth } from '../hooks/useAuth';
 
 interface DashboardProps {
@@ -29,7 +29,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
   const [weeklyTrend, setWeeklyTrend] = useState<number[]>([]);
 
   // Get real budgets from database
-  const { budgets } = useSupabaseBudgets(user?.id);
+  const { budgets } = useBudgets();
 
   useEffect(() => {
     const currentMonthTransactions = transactions.filter(t => 

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Camera, Upload, X, Check, Loader2, User } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 
 interface AvatarUploadProps {
@@ -60,18 +60,8 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
           // Update user profile in database with a reference to local storage
           const avatarUrl = `local_storage:${avatarKey}`;
-          
-          const { error: updateError } = await supabase
-            .from('user_profiles')
-            .update({ 
-              avatar_url: avatarUrl,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id);
 
-          if (updateError) {
-            throw updateError;
-          }
+          await api.put('/profile', { avatar_url: avatarUrl });
 
           // Clean up old avatar from localStorage if it was stored locally
           if (currentAvatarUrl && currentAvatarUrl.startsWith('local_storage:')) {

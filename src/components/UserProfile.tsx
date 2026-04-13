@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, LogOut, Settings, Edit2, Save, X, Mail, Calendar, Shield, Activity } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import AvatarUpload from './AvatarUpload';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 const UserProfile: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -16,16 +16,10 @@ const UserProfile: React.FC = () => {
   React.useEffect(() => {
     const fetchProfile = async () => {
       if (user) {
-        const { data, error } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (data && !error) {
+        try {
+          const data = await api.get('/profile');
           setFullName(data.full_name || '');
-          
-          // Handle avatar URL - check if it's stored locally
+
           if (data?.avatar_url) {
             if (data.avatar_url.startsWith('local_storage:')) {
               const key = data.avatar_url.replace('local_storage:', '');
@@ -35,10 +29,12 @@ const UserProfile: React.FC = () => {
               setAvatarUrl(data.avatar_url);
             }
           }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
         }
       }
     };
-    
+
     fetchProfile();
   }, [user]);
 
@@ -50,25 +46,14 @@ const UserProfile: React.FC = () => {
 
   const handleSave = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ 
-          full_name: fullName,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-      
-      if (error) {
-        throw error;
-      }
-      
+      await api.put('/profile', { full_name: fullName });
       setIsEditing(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      alert('Gagal mengupdate profil');
+      alert(error.message || 'Gagal mengupdate profil');
     } finally {
       setLoading(false);
     }
@@ -340,9 +325,9 @@ const UserProfile: React.FC = () => {
                   <span className="font-medium text-gray-800 dark:text-gray-200">Email</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">Last Sign In</span>
+                  <span className="text-gray-600 dark:text-gray-400">Bergabung</span>
                   <span className="font-medium text-gray-800 dark:text-gray-200">
-                    {user?.last_sign_in_at ? formatDate(user.last_sign_in_at) : 'Tidak diketahui'}
+                    {user?.created_at ? formatDate(user.created_at) : 'Tidak diketahui'}
                   </span>
                 </div>
               </div>
