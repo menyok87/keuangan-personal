@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Transaction, MonthlyStats } from '../types';
 import { useBudgets } from '../hooks/useBudgets';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 
 interface DashboardProps {
   transactions: Transaction[];

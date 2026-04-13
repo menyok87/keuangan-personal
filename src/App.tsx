@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings, CreditCard, User, Moon, Sun } from 'lucide-react';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './contexts/AuthContext';
 import { useTransactions } from './hooks/useTransactions';
 import { useBudgets } from './hooks/useBudgets';
 import { useGoals } from './hooks/useGoals';

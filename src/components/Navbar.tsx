@@ -13,7 +13,7 @@ import {
   HelpCircle,
   TrendingUp,
 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 import DarkModeToggle from './DarkModeToggle';
 import ProfileModal from './ProfileModal';
 import { api } from '../lib/api';

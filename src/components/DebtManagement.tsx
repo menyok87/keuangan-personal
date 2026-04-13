@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Debt, DebtSummary } from '../types/debt';
 import { useDebts } from '../hooks/useDebts';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 import DebtForm from './DebtForm';
 import PaymentForm from './PaymentForm';
 import DebtReports from './DebtReports';

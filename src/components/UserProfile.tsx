@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, LogOut, Settings, Edit2, Save, X, Mail, Calendar, Shield, Activity } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 import AvatarUpload from './AvatarUpload';
 import { api } from '../lib/api';
 
