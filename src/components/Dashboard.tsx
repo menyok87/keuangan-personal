@@ -160,28 +160,31 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header with Key Metrics - Dark mode ready */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-700 dark:via-blue-800 dark:to-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
+    <div className="space-y-4 sm:space-y-8">
+      {/* Hero Card */}
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 dark:from-blue-700 dark:via-blue-800 dark:to-indigo-900 rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-white relative overflow-hidden shadow-xl">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Dashboard Keuangan</h2>
-              <p className="text-blue-100 text-lg">
-                {new Date(currentMonth + '-01').toLocaleDateString('id-ID', { 
-                  month: 'long', 
-                  year: 'numeric' 
-                })}
+              <h2 className="text-lg sm:text-3xl font-bold mb-1">Dashboard Keuangan</h2>
+              <p className="text-blue-100 text-xs sm:text-lg">
+                {new Date(currentMonth + '-01').toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
               </p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
-              <BarChart3 className="h-10 w-10" />
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2 sm:p-4">
+              <BarChart3 className="h-6 w-6 sm:h-10 sm:w-10" />
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-6">
+
+          {/* Saldo bersih besar di mobile */}
+          <div className="sm:hidden mb-4">
+            <p className="text-blue-100 text-xs font-medium mb-1">Saldo Bersih Bulan Ini</p>
+            <p className="text-2xl font-bold">{formatCurrency(monthlyStats.netBalance)}</p>
+          </div>
+
+          <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-6">
+            <div className="hidden sm:block bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm font-medium">Saldo Bersih</p>
@@ -190,8 +193,21 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
                 <Wallet className="h-8 w-8 text-blue-200" />
               </div>
             </div>
-            
-            <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-6">
+            {/* Mobile mini stats */}
+            <div className="sm:hidden bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+              <p className="text-blue-100 text-[10px] font-medium mb-1">Pemasukan</p>
+              <p className="text-sm font-bold truncate">{formatCurrency(monthlyStats.totalIncome)}</p>
+            </div>
+            <div className="sm:hidden bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+              <p className="text-blue-100 text-[10px] font-medium mb-1">Pengeluaran</p>
+              <p className="text-sm font-bold truncate">{formatCurrency(monthlyStats.totalExpenses)}</p>
+            </div>
+            <div className="sm:hidden bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+              <p className="text-blue-100 text-[10px] font-medium mb-1">Tabungan</p>
+              <p className="text-sm font-bold">{monthlyStats.savingsRate.toFixed(0)}%</p>
+            </div>
+
+            <div className="hidden sm:block bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm font-medium">Tingkat Tabungan</p>
@@ -200,8 +216,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
                 <Target className="h-8 w-8 text-blue-200" />
               </div>
             </div>
-            
-            <div className="bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-6">
+            <div className="hidden sm:block bg-white/10 dark:bg-white/5 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm font-medium">Rata-rata Transaksi</p>
@@ -215,48 +230,46 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 dark:shadow-gray-900/30">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 animate-fade-in">
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Pemasukan</p>
-              <p className="text-2xl font-bold text-emerald-600">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Pemasukan</p>
+              <p className="text-base sm:text-2xl font-bold text-emerald-600 truncate">
                 {formatCurrency(monthlyStats.totalIncome)}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">+12% dari bulan lalu</p>
             </div>
-            <div className="bg-emerald-100 rounded-2xl p-4">
-              <ArrowUpCircle className="h-8 w-8 text-emerald-600" />
+            <div className="bg-emerald-100 rounded-xl sm:rounded-2xl p-2 sm:p-4 ml-2 flex-shrink-0">
+              <ArrowUpCircle className="h-5 w-5 sm:h-8 sm:w-8 text-emerald-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 dark:shadow-gray-900/30">
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Pengeluaran</p>
-              <p className="text-2xl font-bold text-red-600">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Pengeluaran</p>
+              <p className="text-base sm:text-2xl font-bold text-red-600 truncate">
                 {formatCurrency(monthlyStats.totalExpenses)}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">-5% dari bulan lalu</p>
             </div>
-            <div className="bg-red-100 rounded-2xl p-4">
-              <ArrowDownCircle className="h-8 w-8 text-red-600" />
+            <div className="bg-red-100 rounded-xl sm:rounded-2xl p-2 sm:p-4 ml-2 flex-shrink-0">
+              <ArrowDownCircle className="h-5 w-5 sm:h-8 sm:w-8 text-red-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 dark:shadow-gray-900/30">
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-6 border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Transaksi</p>
-              <p className="text-2xl font-bold text-gray-700 dark:text-gray-200">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Transaksi</p>
+              <p className="text-base sm:text-2xl font-bold text-gray-700 dark:text-gray-200">
                 {monthlyStats.transactionCount}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Kategori terbanyak: {monthlyStats.topCategory}</p>
+              <p className="hidden sm:block text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">Terbanyak: {monthlyStats.topCategory}</p>
             </div>
-            <div className="bg-blue-100 rounded-2xl p-4">
-              <Calendar className="h-8 w-8 text-blue-600" />
+            <div className="bg-blue-100 rounded-xl sm:rounded-2xl p-2 sm:p-4 ml-2 flex-shrink-0">
+              <Calendar className="h-5 w-5 sm:h-8 sm:w-8 text-blue-600" />
             </div>
           </div>
         </div>
@@ -279,55 +292,47 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currentMonth, error
 
       {/* Budget Tracking */}
       {budgets.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Pelacakan Anggaran</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-8 border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-2xl font-bold text-gray-800 dark:text-white">Pelacakan Anggaran</h3>
             <div className="bg-blue-100 rounded-xl p-2">
-              <Target className="h-6 w-6 text-blue-600" />
+              <Target className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
             {budgets.slice(0, 4).map((budget) => {
               const status = getBudgetStatus(budget.percentage);
               const StatusIcon = status.icon;
-              
+
               return (
-                <div key={budget.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-gray-800 dark:text-white">{budget.category}</h4>
-                    <div className={`${status.bg} rounded-full p-2`}>
-                      <StatusIcon className={`h-4 w-4 ${status.color}`} />
+                <div key={budget.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 sm:p-6">
+                  <div className="flex items-center justify-between mb-2 sm:mb-4">
+                    <h4 className="font-semibold text-sm sm:text-base text-gray-800 dark:text-white truncate pr-2">{budget.category}</h4>
+                    <div className={`${status.bg} rounded-full p-1.5 sm:p-2 flex-shrink-0`}>
+                      <StatusIcon className={`h-3 w-3 sm:h-4 sm:w-4 ${status.color}`} />
                     </div>
                   </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Terpakai</span>
-                      <span className="font-medium">{formatCurrency(budget.spent)}</span>
+
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">Terpakai</span>
+                      <span className="font-medium text-gray-800 dark:text-white">{formatCurrency(budget.spent)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">Anggaran</span>
-                      <span className="font-medium">{formatCurrency(budget.amount)}</span>
-                    </div>
-                    
-                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+
+                    <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                       <div
-                        className={`h-3 rounded-full transition-all duration-500 ${
+                        className={`h-2 rounded-full transition-all duration-500 ${
                           budget.percentage >= 100 ? 'bg-red-500' :
                           budget.percentage >= 80 ? 'bg-orange-500' : 'bg-emerald-500'
                         }`}
                         style={{ width: `${Math.min(budget.percentage, 100)}%` }}
                       />
                     </div>
-                    
-                    <div className="flex justify-between text-sm">
-                      <span className={`font-medium ${status.color}`}>
-                        {budget.percentage.toFixed(1)}% terpakai
-                      </span>
-                      <span className="text-gray-600 dark:text-gray-400">
-                        Sisa: {formatCurrency(Math.max(budget.remaining, 0))}
-                      </span>
+
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className={`font-medium ${status.color}`}>{budget.percentage.toFixed(1)}%</span>
+                      <span className="text-gray-500 dark:text-gray-400">dari {formatCurrency(budget.amount)}</span>
                     </div>
                   </div>
                 </div>
