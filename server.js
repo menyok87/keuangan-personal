@@ -71,8 +71,9 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Password minimal 6 karakter.' });
   }
 
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     const existing = await client.query(
@@ -112,11 +113,11 @@ app.post('/api/auth/register', async (req, res) => {
       user: { id: user.id, email: user.email, full_name: full_name?.trim() || null, created_at: user.created_at }
     });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK').catch(() => {});
     console.error('Register error:', err.message);
     res.status(500).json({ error: 'Terjadi kesalahan saat registrasi.' });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 });
 
@@ -754,6 +755,12 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 app.get(/^(?!\/api).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+// Global error handler — pastikan semua unhandled async errors return JSON
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message);
+  res.status(500).json({ error: 'Terjadi kesalahan pada server.' });
 });
 
 app.listen(port, '0.0.0.0', () => {
