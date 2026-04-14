@@ -189,7 +189,12 @@ app.get('/api/transactions', authenticateToken, async (req, res) => {
       'SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC, created_at DESC',
       [req.user.id]
     );
-    res.json(result.rows);
+    const transactions = result.rows.map(row => ({
+      ...row,
+      amount: Number(row.amount),
+      paymentMethod: row.payment_method,
+    }));
+    res.json(transactions);
   } catch (err) {
     console.error('Get transactions error:', err.message);
     res.status(500).json({ error: 'Gagal memuat transaksi.' });
@@ -424,7 +429,12 @@ app.get('/api/goals', authenticateToken, async (req, res) => {
       'SELECT * FROM financial_goals WHERE user_id = $1 ORDER BY created_at DESC',
       [req.user.id]
     );
-    res.json(result.rows);
+    const goals = result.rows.map(row => ({
+      ...row,
+      target_amount: Number(row.target_amount),
+      current_amount: Number(row.current_amount),
+    }));
+    res.json(goals);
   } catch (err) {
     console.error('Get goals error:', err.message);
     res.status(500).json({ error: 'Gagal memuat target keuangan.' });
@@ -527,7 +537,13 @@ app.get('/api/debts', authenticateToken, async (req, res) => {
       'SELECT * FROM debts WHERE user_id = $1 ORDER BY created_at DESC',
       [req.user.id]
     );
-    res.json(result.rows);
+    const debts = result.rows.map(row => ({
+      ...row,
+      amount: Number(row.amount),
+      remaining_amount: Number(row.remaining_amount),
+      interest_rate: row.interest_rate !== null ? Number(row.interest_rate) : null,
+    }));
+    res.json(debts);
   } catch (err) {
     console.error('Get debts error:', err.message);
     res.status(500).json({ error: 'Gagal memuat data hutang.' });
