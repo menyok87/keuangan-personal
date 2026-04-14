@@ -183,65 +183,65 @@ const FinancialGoals: React.FC<FinancialGoalsProps> = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-8">
+    <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-8 border border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between mb-4 sm:mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Target Keuangan</h2>
-          <p className="text-gray-600 dark:text-gray-300">Tetapkan dan pantau target keuangan Anda</p>
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-white mb-1">Target Keuangan</h2>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Tetapkan dan pantau target keuangan Anda</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors flex items-center space-x-2"
+          className="bg-blue-600 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"
         >
-          <Plus className="h-5 w-5" />
-          <span>Tambah Target</span>
+          <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span>Tambah</span>
         </button>
       </div>
 
       {/* Goals List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
         {goals.map((goal) => {
           const progress = getProgressPercentage(goal.current_amount, goal.target_amount);
           const daysRemaining = getDaysRemaining(goal.deadline);
           const isOverdue = daysRemaining < 0;
-          
+
           return (
-            <div key={goal.id} className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700 dark:to-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h3 className="font-semibold text-gray-800 dark:text-white">{goal.title}</h3>
-                    <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(goal.priority)} dark:bg-opacity-20`}>
+            <div key={goal.id} className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700 dark:to-gray-800 rounded-xl p-3 sm:p-6 border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all">
+              <div className="flex items-start justify-between mb-2 sm:mb-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="font-semibold text-sm sm:text-base text-gray-800 dark:text-white">{goal.title}</h3>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${getPriorityColor(goal.priority)}`}>
                       {getPriorityLabel(goal.priority)}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{goal.category}</p>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{goal.category}</p>
                 </div>
-                <div className="flex space-x-1">
+                <div className="flex space-x-1 flex-shrink-0 ml-2">
                   <button
                     onClick={() => handleEdit(goal)}
-                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                   >
-                    <Edit2 className="h-4 w-4" />
+                    <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </button>
                   <button
                     onClick={() => onDeleteGoal(goal.id)}
-                    className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                    className="p-1.5 sm:p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </button>
                 </div>
               </div>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
+
+              <div className="space-y-2 sm:space-y-4">
+                <div className="flex justify-between text-xs sm:text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Progress</span>
                   <span className="font-medium text-gray-800 dark:text-white">{progress.toFixed(1)}%</span>
                 </div>
-                
-                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
+
+                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 sm:h-3">
                   <div
-                    className={`h-3 rounded-full transition-all duration-500 ${
+                    className={`h-2 sm:h-3 rounded-full transition-all duration-500 ${
                       progress >= 100 ? 'bg-emerald-500' :
                       progress >= 75 ? 'bg-blue-500' :
                       progress >= 50 ? 'bg-yellow-500' : 'bg-orange-500'
@@ -249,39 +249,33 @@ const FinancialGoals: React.FC<FinancialGoalsProps> = ({
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Terkumpul</span>
-                  <span className="font-medium text-gray-800 dark:text-white">{formatCurrency(goal.current_amount)}</span>
+
+                <div className="grid grid-cols-2 gap-x-4 text-xs sm:text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Terkumpul</span>
+                  </div>
+                  <div className="text-right font-medium text-gray-800 dark:text-white truncate">{formatCurrency(goal.current_amount)}</div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Target</span>
+                  </div>
+                  <div className="text-right font-medium text-gray-800 dark:text-white truncate">{formatCurrency(goal.target_amount)}</div>
                 </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Target</span>
-                  <span className="font-medium text-gray-800 dark:text-white">{formatCurrency(goal.target_amount)}</span>
-                </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Sisa</span>
-                  <span className="font-medium text-gray-800 dark:text-white">
-                    {formatCurrency(Math.max(goal.target_amount - goal.current_amount, 0))}
-                  </span>
-                </div>
-                
-                <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+
+                <div className="pt-2 sm:pt-3 border-t border-gray-200 dark:border-gray-600">
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 dark:text-gray-500" />
                       <span className="text-gray-600 dark:text-gray-400">
                         {new Date(goal.deadline).toLocaleDateString('id-ID')}
                       </span>
                     </div>
-                    <span className={`font-medium ${
+                    <span className={`font-medium text-xs sm:text-sm ${
                       isOverdue ? 'text-red-600 dark:text-red-400' :
                       daysRemaining <= 30 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'
                     }`}>
-                      {isOverdue ? `${Math.abs(daysRemaining)} hari terlambat` :
+                      {isOverdue ? `${Math.abs(daysRemaining)}h terlambat` :
                        daysRemaining === 0 ? 'Hari ini' :
-                       `${daysRemaining} hari lagi`}
+                       `${daysRemaining}h lagi`}
                     </span>
                   </div>
                 </div>
@@ -292,13 +286,13 @@ const FinancialGoals: React.FC<FinancialGoalsProps> = ({
       </div>
 
       {goals.length === 0 && (
-        <div className="text-center py-12">
-          <Target className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-          <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-2">Belum ada target keuangan</h3>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">Mulai merencanakan masa depan dengan menetapkan target keuangan</p>
+        <div className="text-center py-6 sm:py-12">
+          <Target className="h-10 w-10 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-gray-300 dark:text-gray-600" />
+          <h3 className="text-sm sm:text-lg font-medium text-gray-800 dark:text-white mb-1 sm:mb-2">Belum ada target keuangan</h3>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-4">Mulai merencanakan masa depan dengan menetapkan target keuangan</p>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+            className="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors text-sm"
           >
             Buat Target
           </button>
@@ -307,43 +301,43 @@ const FinancialGoals: React.FC<FinancialGoalsProps> = ({
 
       {/* Goal Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md max-h-[92vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
                   {editingGoal ? 'Edit Target' : 'Tambah Target'}
                 </h3>
                 <button
                   onClick={handleCancel}
-                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
                 >
-                  <Plus className="h-6 w-6 rotate-45" />
+                  <Plus className="h-5 w-5 sm:h-6 sm:w-6 rotate-45" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
                     Nama Target *
                   </label>
                   <input
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     placeholder="Contoh: Dana Darurat"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
                     Kategori
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">Pilih kategori</option>
                     {categories.map(cat => (
@@ -352,74 +346,78 @@ const FinancialGoals: React.FC<FinancialGoalsProps> = ({
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Target Jumlah (IDR) *
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.target_amount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, target_amount: parseFloat(e.target.value) || 0 }))}
-                    min="0"
-                    step="100000"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="0"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
+                      Target (IDR) *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.target_amount}
+                      onChange={(e) => setFormData(prev => ({ ...prev, target_amount: parseFloat(e.target.value) || 0 }))}
+                      min="0"
+                      step="100000"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="0"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
+                      Saat Ini (IDR)
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.current_amount}
+                      onChange={(e) => setFormData(prev => ({ ...prev, current_amount: parseFloat(e.target.value) || 0 }))}
+                      min="0"
+                      step="10000"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Jumlah Saat Ini (IDR)
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.current_amount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, current_amount: parseFloat(e.target.value) || 0 }))}
-                    min="0"
-                    step="10000"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    placeholder="0"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
+                      Target Tanggal *
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.deadline}
+                      onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:mb-2">
+                      Prioritas
+                    </label>
+                    <select
+                      value={formData.priority}
+                      onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as 'low' | 'medium' | 'high' }))}
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="low">Rendah</option>
+                      <option value="medium">Sedang</option>
+                      <option value="high">Tinggi</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Target Tanggal *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.deadline}
-                    onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Prioritas
-                  </label>
-                  <select
-                    value={formData.priority}
-                    onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value as 'low' | 'medium' | 'high' }))}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  >
-                    <option value="low">Rendah</option>
-                    <option value="medium">Sedang</option>
-                    <option value="high">Tinggi</option>
-                  </select>
-                </div>
-
-                <div className="flex space-x-4">
+                <div className="flex space-x-3 sm:space-x-4 pt-1">
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="flex-1 px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
+                    className="flex-1 px-4 py-2.5 sm:py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors font-medium"
+                    className="flex-1 px-4 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors text-sm font-medium"
                   >
                     {editingGoal ? 'Update' : 'Tambah'}
                   </button>
