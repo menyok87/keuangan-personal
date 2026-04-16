@@ -21,6 +21,10 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'keuangan_personal',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD,
+  max: 10,
+  connectionTimeoutMillis: 10000,  // gagal setelah 10 detik jika DB tidak tersedia
+  idleTimeoutMillis: 30000,
+  statement_timeout: 15000,        // query timeout 15 detik
 });
 
 // Test database connection on startup
@@ -71,8 +75,9 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Password minimal 6 karakter.' });
   }
 
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     const existing = await client.query(
@@ -112,11 +117,11 @@ app.post('/api/auth/register', async (req, res) => {
       user: { id: user.id, email: user.email, full_name: full_name?.trim() || null, created_at: user.created_at }
     });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK').catch(() => {});
     console.error('Register error:', err.message);
     res.status(500).json({ error: 'Terjadi kesalahan saat registrasi.' });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 });
 
@@ -184,7 +189,12 @@ app.get('/api/transactions', authenticateToken, async (req, res) => {
       'SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC, created_at DESC',
       [req.user.id]
     );
-    res.json(result.rows);
+    const transactions = result.rows.map(row => ({
+      ...row,
+      amount: Number(row.amount),
+      paymentMethod: row.payment_method,
+    }));
+    res.json(transactions);
   } catch (err) {
     console.error('Get transactions error:', err.message);
     res.status(500).json({ error: 'Gagal memuat transaksi.' });
@@ -324,7 +334,14 @@ app.get('/api/budgets', authenticateToken, async (req, res) => {
       ORDER BY b.created_at DESC`,
       [req.user.id]
     );
-    res.json(result.rows);
+    const budgets = result.rows.map(row => ({
+      ...row,
+      amount: Number(row.amount),
+      spent: Number(row.spent),
+      remaining: Number(row.remaining),
+      percentage: Number(row.percentage),
+    }));
+    res.json(budgets);
   } catch (err) {
     console.error('Get budgets error:', err.message);
     res.status(500).json({ error: 'Gagal memuat anggaran.' });
@@ -412,7 +429,12 @@ app.get('/api/goals', authenticateToken, async (req, res) => {
       'SELECT * FROM financial_goals WHERE user_id = $1 ORDER BY created_at DESC',
       [req.user.id]
     );
-    res.json(result.rows);
+    const goals = result.rows.map(row => ({
+      ...row,
+      target_amount: Number(row.target_amount),
+      current_amount: Number(row.current_amount),
+    }));
+    res.json(goals);
   } catch (err) {
     console.error('Get goals error:', err.message);
     res.status(500).json({ error: 'Gagal memuat target keuangan.' });
@@ -515,7 +537,13 @@ app.get('/api/debts', authenticateToken, async (req, res) => {
       'SELECT * FROM debts WHERE user_id = $1 ORDER BY created_at DESC',
       [req.user.id]
     );
-    res.json(result.rows);
+    const debts = result.rows.map(row => ({
+      ...row,
+      amount: Number(row.amount),
+      remaining_amount: Number(row.remaining_amount),
+      interest_rate: row.interest_rate !== null ? Number(row.interest_rate) : null,
+    }));
+    res.json(debts);
   } catch (err) {
     console.error('Get debts error:', err.message);
     res.status(500).json({ error: 'Gagal memuat data hutang.' });
@@ -754,6 +782,12 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 app.get(/^(?!\/api).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+// Global error handler — pastikan semua unhandled async errors return JSON
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message);
+  res.status(500).json({ error: 'Terjadi kesalahan pada server.' });
 });
 
 app.listen(port, '0.0.0.0', () => {

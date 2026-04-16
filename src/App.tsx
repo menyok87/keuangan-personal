@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Receipt, TrendingUp, Target, BarChart3, Settings, CreditCard, User, Moon, Sun } from 'lucide-react';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './contexts/AuthContext';
 import { useTransactions } from './hooks/useTransactions';
 import { useBudgets } from './hooks/useBudgets';
 import { useGoals } from './hooks/useGoals';
@@ -244,74 +244,96 @@ function App() {
       {/* Header */}
       <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-3 shadow-lg">
-                <Receipt className="h-8 w-8 text-white" />
+          <div className="flex items-center justify-between h-14 sm:h-20">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-lg">
+                <Receipt className="h-5 w-5 sm:h-8 sm:w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <h1 className="text-base sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Akuntansi Keuangan
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Sistem manajemen keuangan personal</p>
+                <p className="hidden sm:block text-sm text-gray-600 dark:text-gray-300">Sistem manajemen keuangan personal</p>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-3">
+
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <button
                 onClick={toggleDarkMode}
                 className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-200"
                 title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
               >
                 {isDarkMode ? (
-                  <Sun className="h-5 w-5 text-yellow-500" />
+                  <Sun className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
                 ) : (
-                  <Moon className="h-5 w-5 text-blue-600" />
+                  <Moon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                 )}
               </button>
               <button
                 onClick={() => setShowForm(true)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-1 sm:space-x-2 shadow-lg"
               >
-                <Plus className="h-5 w-5" />
-                <span className="font-medium">Tambah</span>
+                <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="font-medium text-sm sm:text-base">Tambah</span>
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Navigation Tabs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-4">
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-2 border border-gray-200 dark:border-gray-700">
-              <div className="flex space-x-1">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-                        activeTab === tab.id
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="hidden sm:inline">{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+      {/* Navigation Tabs — Desktop only (hidden on mobile) */}
+      <div className="hidden sm:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg p-2 border border-gray-200 dark:border-gray-700">
+          <div className="flex space-x-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
 
+      {/* Bottom Navigation — Mobile only */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 shadow-2xl">
+        <div className="grid grid-cols-7 h-16">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex flex-col items-center justify-center space-y-0.5 transition-all duration-200 ${
+                  isActive
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                <div className={`p-1 rounded-lg transition-all duration-200 ${isActive ? 'bg-blue-50 dark:bg-blue-900/40' : ''}`}>
+                  <Icon className={`h-5 w-5 ${isActive ? 'stroke-[2.5]' : ''}`} />
+                </div>
+                <span className="text-[9px] font-medium leading-none">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 sm:pb-12">
         {/* Month Selector - Only show for dashboard and transactions */}
         {(activeTab === 'dashboard' || activeTab === 'transactions') && (
           <div className="mb-8">

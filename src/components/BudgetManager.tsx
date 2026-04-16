@@ -107,9 +107,9 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
   // Show loading state
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
+      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-8 border border-gray-100 dark:border-gray-700">
+        <div className="text-center py-6 sm:py-12">
+          <div className="animate-spin rounded-full h-10 w-10 sm:h-16 sm:w-16 border-b-4 border-blue-600 mx-auto mb-3 sm:mb-6"></div>
           <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-2">Memuat Anggaran</h3>
           <p className="text-gray-600 dark:text-gray-300">Sedang mengambil data anggaran Anda...</p>
         </div>
@@ -120,12 +120,12 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
   // Show error state
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
-        <div className="text-center py-12">
+      <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-8 border border-gray-100 dark:border-gray-700">
+        <div className="text-center py-6 sm:py-12">
           <div className="bg-red-100 dark:bg-red-900/20 rounded-xl p-6">
             <h3 className="text-lg font-medium text-red-800 dark:text-red-300 mb-2">Error Memuat Anggaran</h3>
             <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
-            <div className="flex justify-center space-x-4">
+            <div className="flex justify-center space-x-2 sm:space-x-4">
               <button
                 onClick={() => window.location.reload()}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 transition-colors"
@@ -140,15 +140,15 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-8">
+    <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-md sm:shadow-xl p-4 sm:p-8 border border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between mb-4 sm:mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Manajemen Anggaran</h2>
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-white mb-2">Manajemen Anggaran</h2>
           <p className="text-gray-600 dark:text-gray-300">Kelola dan pantau anggaran bulanan Anda</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors flex items-center space-x-2"
+          className="bg-blue-600 text-white px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base rounded-xl hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors flex items-center space-x-2"
         >
           <Plus className="h-5 w-5" />
           <span>Tambah Anggaran</span>
@@ -156,13 +156,13 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
       </div>
 
       {/* Budget List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
         {budgets.map((budget) => {
           const status = getBudgetStatus(budget.percentage);
           const StatusIcon = status.icon;
           
           return (
-            <div key={budget.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+            <div key={budget.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 sm:p-6 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
               <div className="flex items-center justify-between mb-4">
                 <div>
                     <h3 className="font-semibold text-gray-800 dark:text-white">{budget.category}</h3>
@@ -226,8 +226,8 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
       </div>
 
       {budgets.length === 0 && (
-        <div className="text-center py-12">
-          <Target className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+        <div className="text-center py-6 sm:py-12">
+          <Target className="h-10 w-10 sm:h-16 sm:w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
           <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-2">Belum ada anggaran</h3>
           <p className="text-gray-600 dark:text-gray-300 mb-4">Mulai kelola keuangan dengan membuat anggaran pertama Anda</p>
           <button
@@ -242,10 +242,10 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
       {/* Budget Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white">
+              <div className="flex items-center justify-between mb-3 sm:mb-6">
+                <h3 className="text-base sm:text-xl font-bold text-gray-800 dark:text-white">
                   {editingBudget ? 'Edit Anggaran' : 'Tambah Anggaran'}
                 </h3>
                 <button
@@ -302,7 +302,7 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({
                   </select>
                 </div>
 
-                <div className="flex space-x-4">
+                <div className="flex space-x-2 sm:space-x-4">
                   <button
                     type="button"
                     onClick={handleCancel}

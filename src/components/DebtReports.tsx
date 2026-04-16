@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Debt } from '../types/debt';
 import { useDebts } from '../hooks/useDebts';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 
 const DebtReports: React.FC = () => {
   const { user } = useAuth();

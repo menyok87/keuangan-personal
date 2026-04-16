@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS user_profiles (
   id          UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  email       TEXT NOT NULL DEFAULT '',
   full_name   TEXT,
   avatar_url  TEXT,
   occupation  TEXT,
@@ -49,8 +50,8 @@ CREATE TABLE IF NOT EXISTS user_profiles (
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO user_profiles (id, full_name)
-  VALUES (NEW.id, NULL)
+  INSERT INTO user_profiles (id, email, full_name)
+  VALUES (NEW.id, NEW.email, NULL)
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
@@ -167,9 +168,9 @@ BEGIN
   SET
     remaining_amount = GREATEST(v_debt_amount - v_total_paid, 0),
     status = CASE
-      WHEN v_total_paid <= 0 THEN 'pending'
-      WHEN v_debt_amount - v_total_paid <= 0 THEN 'paid'
-      ELSE 'partial'
+      WHEN v_total_paid <= 0 THEN 'pending'::debt_status_type
+      WHEN v_debt_amount - v_total_paid <= 0 THEN 'paid'::debt_status_type
+      ELSE 'partial'::debt_status_type
     END,
     updated_at = now()
   WHERE id = v_debt_id;
