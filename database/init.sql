@@ -168,9 +168,9 @@ BEGIN
   SET
     remaining_amount = GREATEST(v_debt_amount - v_total_paid, 0),
     status = CASE
-      WHEN v_total_paid <= 0 THEN 'pending'
-      WHEN v_debt_amount - v_total_paid <= 0 THEN 'paid'
-      ELSE 'partial'
+      WHEN v_total_paid <= 0 THEN 'pending'::debt_status_type
+      WHEN v_debt_amount - v_total_paid <= 0 THEN 'paid'::debt_status_type
+      ELSE 'partial'::debt_status_type
     END,
     updated_at = now()
   WHERE id = v_debt_id;
