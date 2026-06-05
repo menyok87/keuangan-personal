@@ -1,89 +1,188 @@
-// ============================================================
-// API Client - menggantikan Supabase client
-// ============================================================
+// API Client untuk PostgreSQL self-hosted
+// Menggantikan Supabase client
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
+// =================================================
+// TOKEN MANAGEMENT
+// =================================================
 
 const TOKEN_KEY = 'keuangan_token';
 const USER_KEY = 'keuangan_user';
 
-export interface AppUser {
-  id: string;
-  email: string;
-  created_at: string;
-  full_name?: string;
-  avatar_url?: string;
-  occupation?: string;
-  phone?: string;
-  location?: string;
-  bio?: string;
-  // Shim untuk komponen yang masih menggunakan user?.user_metadata?.full_name
-  user_metadata?: { full_name?: string };
-}
-
-export const tokenStorage = {
-  get: (): string | null => {
-    try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
-  },
-  set: (token: string): void => {
-    try { localStorage.setItem(TOKEN_KEY, token); } catch {}
-  },
-  remove: (): void => {
-    try {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-    } catch {}
-  }
+const getToken = (): string | null => {
+  try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
 };
 
-export const userStorage = {
-  get: (): AppUser | null => {
-    try {
-      const raw = localStorage.getItem(USER_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-  },
-  set: (user: AppUser): void => {
-    try { localStorage.setItem(USER_KEY, JSON.stringify(user)); } catch {}
-  }
+const setToken = (token: string, user: any) => {
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } catch { /* ignore */ }
 };
 
-// Core fetch wrapper
-async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
-  const token = tokenStorage.get();
+const clearTokens = () => {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  } catch { /* ignore */ }
+};
+
+const getStoredUser = (): any | null => {
+  try {
+    const str = localStorage.getItem(USER_KEY);
+    return str ? JSON.parse(str) : null;
+  } catch { return null; }
+};
+
+// =================================================
+// AUTH STATE LISTENERS
+// =================================================
+
+type AuthEvent = 'SIGNED_IN' | 'SIGNED_OUT' | 'INITIAL_SESSION' | 'TOKEN_REFRESHED';
+type AuthCallback = (event: AuthEvent, session: { user: any } | null) => void;
+
+const listeners: AuthCallback[] = [];
+
+const emitAuth = (event: AuthEvent, session: { user: any } | null) => {
+  listeners.forEach(cb => {
+    try { cb(event, session); } catch { /* ignore */ }
+  });
+};
+
+// =================================================
+// HTTP HELPER
+// =================================================
+
+async function apiRequest<T = any>(
+  path: string,
+  options: RequestInit = {}
+): Promise<{ data: T | null; error: { message: string } | null }> {
+  const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers as Record<string, string> || {})
   };
 
-  const res = await fetch(`/api${path}`, { ...options, headers });
+  try {
+    const response = await fetch(`${API_BASE}/api${path}`, { ...options, headers });
+    const data = await response.json();
 
-  if (res.status === 401) {
-    tokenStorage.remove();
-    // Dispatch event agar useAuth bisa handle logout tanpa circular imports
-    window.dispatchEvent(new CustomEvent('auth:logout'));
-    throw new Error('Sesi login berakhir. Silakan login ulang.');
-  }
+    if (!response.ok) {
+      return { data: null, error: { message: data.error || 'Permintaan gagal' } };
+    }
 
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || `HTTP error ${res.status}`);
+    return { data, error: null };
+  } catch (err: any) {
+    return { data: null, error: { message: err.message || 'Koneksi gagal' } };
   }
-  return data;
 }
 
-export const api = {
-  get: (path: string) => apiFetch(path),
-  post: (path: string, body: any) =>
-    apiFetch(path, { method: 'POST', body: JSON.stringify(body) }),
-  put: (path: string, body: any) =>
-    apiFetch(path, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: (path: string) =>
-    apiFetch(path, { method: 'DELETE' })
+// =================================================
+// AUTH
+// =================================================
+
+export const auth = {
+  signUp: async (email: string, password: string, userData?: { full_name?: string }) => {
+    const { data, error } = await apiRequest<{ user: any; token: string }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, full_name: userData?.full_name })
+    });
+
+    if (data?.token) {
+      setToken(data.token, data.user);
+      emitAuth('SIGNED_IN', { user: data.user });
+    }
+
+    return { data, error };
+  },
+
+  signIn: async (email: string, password: string) => {
+    const { data, error } = await apiRequest<{ user: any; token: string }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+
+    if (data?.token) {
+      setToken(data.token, data.user);
+      emitAuth('SIGNED_IN', { user: data.user });
+    }
+
+    return { data, error };
+  },
+
+  signOut: async () => {
+    clearTokens();
+    emitAuth('SIGNED_OUT', null);
+    return { error: null };
+  },
+
+  getCurrentUser: async () => {
+    const token = getToken();
+    if (!token) return { user: null, error: null };
+
+    const { data, error } = await apiRequest<{ user: any }>('/auth/me');
+
+    if (error || !data) {
+      // Token tidak valid, bersihkan
+      if (error?.message?.includes('tidak valid') || error?.message?.includes('kedaluwarsa')) {
+        clearTokens();
+      }
+      return { user: null, error: null };
+    }
+
+    // Update stored user
+    try { localStorage.setItem(USER_KEY, JSON.stringify(data.user)); } catch { /* ignore */ }
+
+    return { user: data.user, error: null };
+  },
+
+  onAuthStateChange: (callback: AuthCallback) => {
+    listeners.push(callback);
+
+    // Fire initial state
+    const user = getStoredUser();
+    const token = getToken();
+    setTimeout(() => {
+      if (token && user) {
+        callback('INITIAL_SESSION', { user });
+      } else {
+        callback('SIGNED_OUT', null);
+      }
+    }, 0);
+
+    return {
+      data: {
+        subscription: {
+          unsubscribe: () => {
+            const idx = listeners.indexOf(callback);
+            if (idx > -1) listeners.splice(idx, 1);
+          }
+        }
+      }
+    };
+  },
+
+  clearSession: async () => {
+    clearTokens();
+    emitAuth('SIGNED_OUT', null);
+  }
 };
 
-export const authApi = {
-  register: (email: string, password: string, full_name?: string) =>
-    api.post('/auth/register', { email, password, full_name }),
-  login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
-  me: () => api.get('/auth/me')
+// =================================================
+// API CLIENT
+// =================================================
+
+export const apiClient = {
+  get: <T = any>(path: string) => apiRequest<T>(path),
+
+  post: <T = any>(path: string, body: any) =>
+    apiRequest<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+
+  put: <T = any>(path: string, body: any) =>
+    apiRequest<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
+
+  delete: <T = any>(path: string) =>
+    apiRequest<T>(path, { method: 'DELETE' })
 };

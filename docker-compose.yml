@@ -1,53 +1,88 @@
 version: '3.8'
 
 services:
-  akuntansi-app:
-    build: 
+  # ============================
+  # PostgreSQL Database
+  # ============================
+  postgres:
+    image: postgres:16-alpine
+    container_name: keuangan-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-keuangan_personal}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-keuangan_personal}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - keuangan-network
+
+  # ============================
+  # Aplikasi (React + Express API)
+  # ============================
+  app:
+    build:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: akuntansi-keuangan
+    container_name: keuangan-app
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
-    volumes:
-      - ./logs:/app/logs
-      - /etc/localtime:/etc/localtime:ro
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-keuangan_personal}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - JWT_SECRET=${JWT_SECRET:-keuangan-personal-secret-key-2024}
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     networks:
-      - akuntansi-network
+      - keuangan-network
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
-  # Optional: Nginx reverse proxy
+  # ============================
+  # Nginx (opsional)
+  # ============================
   nginx:
     image: nginx:alpine
-    container_name: akuntansi-nginx
+    container_name: keuangan-nginx
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./ssl:/etc/ssl/certs:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
-      - akuntansi-app
+      - app
     restart: unless-stopped
     networks:
-      - akuntansi-network
+      - keuangan-network
+    profiles:
+      - with-nginx
     logging:
       driver: "json-file"
       options:
@@ -55,10 +90,9 @@ services:
         max-file: "3"
 
 networks:
-  akuntansi-network:
+  keuangan-network:
     driver: bridge
 
-# Optional: Add volumes for persistent data
 volumes:
-  app-logs:
+  postgres_data:
     driver: local

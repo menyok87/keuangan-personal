@@ -8,8 +8,9 @@ export default defineConfig({
     host: true,
     port: 5173,
     proxy: {
+      // Forward /api requests ke backend server saat development
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3001',
         changeOrigin: true
       }
     }
@@ -17,14 +18,13 @@ export default defineConfig({
   preview: {
     host: '0.0.0.0',
     port: 3000,
-    // Allow access from any host for production deployment
     allowedHosts: [
       'localhost',
       '127.0.0.1',
       'keuangan99.com',
       'www.keuangan99.com',
-      '.keuangan99.com', // Wildcard for subdomains
-      'all' // Allow all hosts (for production)
+      '.keuangan99.com',
+      'all'
     ]
   },
   build: {

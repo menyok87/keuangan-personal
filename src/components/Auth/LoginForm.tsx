@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { auth } from '../../lib/api';
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -8,7 +8,6 @@ interface LoginFormProps {
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToSignup }) => {
-  const { signIn } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -23,15 +22,16 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToSignup }) =>
     setError('');
 
     try {
-      const { data, error } = await signIn(formData.email, formData.password);
-
+      const { data, error } = await auth.signIn(formData.email, formData.password);
+      
       if (error) {
         setError(error.message || 'Gagal login. Periksa email dan password Anda.');
-      } else if (data) {
+      } else if (data?.user) {
         onSuccess();
       }
-    } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan sistem. Silakan coba lagi.');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Terjadi kesalahan sistem. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }

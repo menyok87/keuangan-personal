@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react';
-import { AppUser, api, authApi, tokenStorage, userStorage } from '../lib/api';
+import { auth } from '../lib/api';
+
+export interface AppUser {
+  id: string;
+  email: string;
+  full_name?: string;
+  occupation?: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
+  avatar_url?: string;
+  created_at?: string;
+}
 
 export const useAuth = () => {
   const [user, setUser] = useState<AppUser | null>(null);
@@ -7,89 +19,59 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Restore sesi dari localStorage saat mount
-    const storedUser = userStorage.get();
-    const token = tokenStorage.get();
-    if (storedUser && token) {
-      // Tambahkan shim user_metadata untuk komponen lama
-      setUser({
-        ...storedUser,
-        user_metadata: { full_name: storedUser.full_name }
-      });
-    }
-    setLoading(false);
-
-    // Listen untuk forced logout dari api.ts (401 response)
-    const handleLogout = () => {
-      setUser(null);
-      setError(null);
+    // Cek user saat ini
+    const getUser = async () => {
+      try {
+        const { user, error } = await auth.getCurrentUser();
+        if (error) {
+          setError(error.message);
+        } else {
+          setError(null);
+        }
+        setUser(user);
+      } catch (err: any) {
+        setError(err.message);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
-    window.addEventListener('auth:logout', handleLogout);
-    return () => window.removeEventListener('auth:logout', handleLogout);
+
+    getUser();
+
+    // Listen untuk perubahan auth state
+    const { data: { subscription } } = auth.onAuthStateChange((event, session) => {
+      try {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setError(null);
+        } else if (session?.user) {
+          setUser(session.user);
+          setError(null);
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      const data = await authApi.login(email, password);
-      tokenStorage.set(data.token);
-      const appUser: AppUser = {
-        ...data.user,
-        user_metadata: { full_name: data.user.full_name }
-      };
-      userStorage.set(appUser);
-      setUser(appUser);
-      setError(null);
-      return { data, error: null };
-    } catch (err: any) {
-      setError(err.message);
-      return { data: null, error: err };
-    }
-  };
-
-  const signUp = async (email: string, password: string, full_name?: string) => {
-    try {
-      const data = await authApi.register(email, password, full_name);
-      tokenStorage.set(data.token);
-      const appUser: AppUser = {
-        ...data.user,
-        user_metadata: { full_name: data.user.full_name }
-      };
-      userStorage.set(appUser);
-      setUser(appUser);
-      setError(null);
-      return { data, error: null };
-    } catch (err: any) {
-      setError(err.message);
-      return { data: null, error: err };
-    }
-  };
 
   const signOut = async () => {
     try {
-      tokenStorage.remove();
+      setLoading(true);
+      const { error } = await auth.signOut();
       setUser(null);
       setError(null);
-      return { error: null };
+      return { error };
     } catch (err: any) {
-      // Tetap clear state meski ada error
       setUser(null);
       setError(null);
       return { error: err };
-    }
-  };
-
-  // Update user di state & storage (untuk setelah update profil)
-  const refreshUser = async () => {
-    try {
-      const data = await api.get('/auth/me');
-      const appUser: AppUser = {
-        ...data.user,
-        user_metadata: { full_name: data.user.full_name }
-      };
-      userStorage.set(appUser);
-      setUser(appUser);
-    } catch {
-      // Ignore refresh errors
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,10 +79,7 @@ export const useAuth = () => {
     user,
     loading,
     error,
-    signIn,
-    signUp,
     signOut,
-    refreshUser,
     isAuthenticated: !!user
   };
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, UserPlus } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { auth } from '../../lib/api';
 
 interface SignupFormProps {
   onSuccess: () => void;
@@ -8,7 +8,6 @@ interface SignupFormProps {
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLogin }) => {
-  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -38,15 +37,23 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSwitchToLogin }) =
     }
 
     try {
-      const { data, error } = await signUp(formData.email, formData.password, formData.fullName);
-
+      const { data, error } = await auth.signUp(
+        formData.email, 
+        formData.password,
+        { 
+          full_name: formData.fullName,
+          email_confirm: false
+        }
+      );
+      
       if (error) {
         setError(error.message || 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.');
-      } else if (data) {
+      } else if (data?.user) {
         onSuccess();
       }
-    } catch (err: any) {
-      setError(err.message || 'Terjadi kesalahan sistem. Silakan coba lagi dalam beberapa saat.');
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('Terjadi kesalahan sistem. Silakan coba lagi dalam beberapa saat.');
     } finally {
       setLoading(false);
     }

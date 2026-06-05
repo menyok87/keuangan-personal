@@ -1,238 +1,266 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import pg from 'pg';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
 import cors from 'cors';
-import 'dotenv/config';
+import pkg from 'pg';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import fs from 'fs';
 
-const { Pool } = pg;
+const { Pool } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+const API_PORT = process.env.API_PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'keuangan-personal-secret-key-2024';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-// PostgreSQL connection pool
+// =================================================
+// DATABASE CONNECTION
+// =================================================
+
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME || 'keuangan_personal',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD,
+  password: process.env.DB_PASSWORD || 'postgres',
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
-// Test database connection on startup
+// Test koneksi database
 pool.connect((err, client, release) => {
   if (err) {
-    console.error('❌ Database connection failed:', err.message);
+    console.error('❌ Gagal koneksi ke PostgreSQL:', err.message);
+    console.error('   Pastikan PostgreSQL berjalan dan konfigurasi DB sudah benar');
   } else {
-    console.log('✅ Database connected successfully');
+    console.log('✅ Berhasil terhubung ke PostgreSQL');
     release();
   }
 });
 
-// ============================================================
+// =================================================
 // MIDDLEWARE
-// ============================================================
-app.use(cors());
+// =================================================
+
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true
+}));
 app.use(express.json());
 
-// ============================================================
+// =================================================
 // AUTH MIDDLEWARE
-// ============================================================
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'Token tidak ditemukan. Silakan login ulang.' });
+// =================================================
+
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token tidak ditemukan' });
   }
+
+  const token = authHeader.substring(7);
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.userId;
     next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Token tidak valid atau sudah expired. Silakan login ulang.' });
+  } catch {
+    return res.status(401).json({ error: 'Token tidak valid atau sudah kedaluwarsa' });
   }
 };
 
-// ============================================================
+// =================================================
 // AUTH ROUTES
-// ============================================================
+// =================================================
 
-// POST /api/auth/register
+// Register
 app.post('/api/auth/register', async (req, res) => {
   const { email, password, full_name } = req.body;
+
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email dan password wajib diisi.' });
+    return res.status(400).json({ error: 'Email dan password wajib diisi' });
   }
+
   if (password.length < 6) {
-    return res.status(400).json({ error: 'Password minimal 6 karakter.' });
+    return res.status(400).json({ error: 'Password minimal 6 karakter' });
   }
 
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-
-    const existing = await client.query(
-      'SELECT id FROM users WHERE email = $1',
-      [email.toLowerCase().trim()]
-    );
+    // Cek email sudah terdaftar
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({ error: 'Email sudah terdaftar.' });
+      return res.status(400).json({ error: 'Email sudah terdaftar' });
     }
 
-    const password_hash = await bcrypt.hash(password, 12);
-    const result = await client.query(
-      'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at',
-      [email.toLowerCase().trim(), password_hash]
+    const password_hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      'INSERT INTO users (email, password_hash, full_name) VALUES ($1, $2, $3) RETURNING id, email, full_name, created_at',
+      [email.toLowerCase().trim(), password_hash, full_name || null]
     );
+
     const user = result.rows[0];
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
 
-    // Update full_name jika disediakan (trigger sudah buat profile row)
-    if (full_name && full_name.trim()) {
-      await client.query(
-        'UPDATE user_profiles SET full_name = $1 WHERE id = $2',
-        [full_name.trim(), user.id]
-      );
-    }
-
-    await client.query('COMMIT');
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-
-    res.status(201).json({
-      token,
-      user: { id: user.id, email: user.email, full_name: full_name?.trim() || null, created_at: user.created_at }
-    });
+    res.status(201).json({ user, token });
   } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('Register error:', err.message);
-    res.status(500).json({ error: 'Terjadi kesalahan saat registrasi.' });
-  } finally {
-    client.release();
+    console.error('Register error:', err);
+    res.status(500).json({ error: 'Gagal mendaftar' });
   }
 });
 
-// POST /api/auth/login
+// Login
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
+
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email dan password wajib diisi.' });
+    return res.status(400).json({ error: 'Email dan password wajib diisi' });
   }
+
   try {
     const result = await pool.query(
-      'SELECT u.id, u.email, u.password_hash, u.created_at, p.full_name, p.avatar_url FROM users u LEFT JOIN user_profiles p ON p.id = u.id WHERE u.email = $1',
+      'SELECT id, email, password_hash, full_name, occupation, phone, location, bio, avatar_url FROM users WHERE email = $1',
       [email.toLowerCase().trim()]
     );
+
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Email atau password salah.' });
+      return res.status(401).json({ error: 'Email atau password salah' });
     }
+
     const user = result.rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
+
     if (!valid) {
-      return res.status(401).json({ error: 'Email atau password salah.' });
+      return res.status(401).json({ error: 'Email atau password salah' });
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    const { password_hash, ...userWithoutPassword } = user;
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
 
-    res.json({
-      token,
-      user: { id: user.id, email: user.email, full_name: user.full_name, avatar_url: user.avatar_url, created_at: user.created_at }
-    });
+    res.json({ user: userWithoutPassword, token });
   } catch (err) {
-    console.error('Login error:', err.message);
-    res.status(500).json({ error: 'Terjadi kesalahan saat login.' });
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Gagal login' });
   }
 });
 
-// GET /api/auth/me
-app.get('/api/auth/me', authenticateToken, async (req, res) => {
+// Get current user
+app.get('/api/auth/me', authenticate, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT u.id, u.email, u.created_at, p.full_name, p.avatar_url, p.occupation, p.phone, p.location, p.bio FROM users u LEFT JOIN user_profiles p ON p.id = u.id WHERE u.id = $1',
-      [req.user.id]
+      'SELECT id, email, full_name, occupation, phone, location, bio, avatar_url, created_at FROM users WHERE id = $1',
+      [req.userId]
     );
+
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User tidak ditemukan.' });
+      return res.status(404).json({ error: 'User tidak ditemukan' });
     }
+
     res.json({ user: result.rows[0] });
   } catch (err) {
-    console.error('Get me error:', err.message);
-    res.status(500).json({ error: 'Terjadi kesalahan.' });
+    console.error('Get user error:', err);
+    res.status(500).json({ error: 'Gagal mengambil data user' });
   }
 });
 
-// ============================================================
-// TRANSACTIONS ROUTES
-// ============================================================
+// =================================================
+// PROFILE ROUTES
+// =================================================
 
-// GET /api/transactions
-app.get('/api/transactions', authenticateToken, async (req, res) => {
+app.get('/api/profile', authenticate, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, full_name, occupation, phone, location, bio, avatar_url, created_at, updated_at FROM users WHERE id = $1',
+      [req.userId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Profil tidak ditemukan' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Get profile error:', err);
+    res.status(500).json({ error: 'Gagal mengambil profil' });
+  }
+});
+
+app.put('/api/profile', authenticate, async (req, res) => {
+  const { full_name, occupation, phone, location, bio, avatar_url } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE users SET
+        full_name = COALESCE($1, full_name),
+        occupation = COALESCE($2, occupation),
+        phone = COALESCE($3, phone),
+        location = COALESCE($4, location),
+        bio = COALESCE($5, bio),
+        avatar_url = COALESCE($6, avatar_url),
+        updated_at = now()
+       WHERE id = $7
+       RETURNING id, email, full_name, occupation, phone, location, bio, avatar_url, updated_at`,
+      [full_name, occupation, phone, location, bio, avatar_url, req.userId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update profile error:', err);
+    res.status(500).json({ error: 'Gagal update profil' });
+  }
+});
+
+// =================================================
+// TRANSACTIONS ROUTES
+// =================================================
+
+app.get('/api/transactions', authenticate, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM transactions WHERE user_id = $1 ORDER BY date DESC, created_at DESC',
-      [req.user.id]
+      [req.userId]
     );
     res.json(result.rows);
   } catch (err) {
-    console.error('Get transactions error:', err.message);
-    res.status(500).json({ error: 'Gagal memuat transaksi.' });
+    console.error('Get transactions error:', err);
+    res.status(500).json({ error: 'Gagal mengambil transaksi' });
   }
 });
 
-// POST /api/transactions
-app.post('/api/transactions', authenticateToken, async (req, res) => {
-  const { amount, description, category, subcategory, type, date, payment_method, tags, notes, location, is_recurring, recurring_frequency } = req.body;
+app.post('/api/transactions', authenticate, async (req, res) => {
+  const {
+    amount, description, category, subcategory, type, date,
+    payment_method, tags, notes, location, is_recurring, recurring_frequency
+  } = req.body;
 
-  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: 'Jumlah transaksi harus lebih dari 0.' });
-  if (!description?.trim()) return res.status(400).json({ error: 'Deskripsi transaksi wajib diisi.' });
-  if (!category?.trim()) return res.status(400).json({ error: 'Kategori transaksi wajib dipilih.' });
-  if (!type || !['income', 'expense'].includes(type)) return res.status(400).json({ error: 'Tipe transaksi tidak valid.' });
-  if (!date) return res.status(400).json({ error: 'Tanggal transaksi wajib diisi.' });
+  if (!amount || !description || !category || !type || !date) {
+    return res.status(400).json({ error: 'Field wajib: amount, description, category, type, date' });
+  }
 
   try {
     const result = await pool.query(
-      `INSERT INTO transactions (user_id, amount, description, category, subcategory, type, date, payment_method, tags, notes, location, is_recurring, recurring_frequency)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      `INSERT INTO transactions
+        (user_id, amount, description, category, subcategory, type, date,
+         payment_method, tags, notes, location, is_recurring, recurring_frequency)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING *`,
       [
-        req.user.id,
-        Number(amount),
-        description.trim(),
-        category.trim(),
-        subcategory?.trim() || null,
-        type,
-        date,
-        payment_method || 'cash',
-        Array.isArray(tags) ? tags : [],
-        notes?.trim() || null,
-        location?.trim() || null,
-        Boolean(is_recurring),
-        is_recurring ? recurring_frequency : null
+        req.userId, amount, description, category, subcategory || null,
+        type, date, payment_method || 'cash',
+        tags || [], notes || null, location || null,
+        is_recurring || false, is_recurring ? recurring_frequency : null
       ]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Add transaction error:', err.message);
-    res.status(500).json({ error: 'Gagal menyimpan transaksi.' });
+    console.error('Create transaction error:', err);
+    res.status(500).json({ error: 'Gagal menyimpan transaksi' });
   }
 });
 
-// PUT /api/transactions/:id
-app.put('/api/transactions/:id', authenticateToken, async (req, res) => {
+app.put('/api/transactions/:id', authenticate, async (req, res) => {
   const { id } = req.params;
-  const { amount, description, category, subcategory, type, date, payment_method, tags, notes, location, is_recurring, recurring_frequency } = req.body;
+  const {
+    amount, description, category, subcategory, type, date,
+    payment_method, tags, notes, location, is_recurring, recurring_frequency
+  } = req.body;
 
   try {
     const result = await pool.query(
@@ -250,118 +278,100 @@ app.put('/api/transactions/:id', authenticateToken, async (req, res) => {
         is_recurring = COALESCE($11, is_recurring),
         recurring_frequency = $12,
         updated_at = now()
-      WHERE id = $13 AND user_id = $14
-      RETURNING *`,
+       WHERE id = $13 AND user_id = $14
+       RETURNING *`,
       [
-        amount !== undefined ? Number(amount) : null,
-        description?.trim() || null,
-        category?.trim() || null,
-        subcategory?.trim() || null,
-        type || null,
-        date || null,
-        payment_method || null,
-        Array.isArray(tags) ? tags : null,
-        notes?.trim() || null,
-        location?.trim() || null,
-        is_recurring !== undefined ? Boolean(is_recurring) : null,
+        amount, description, category, subcategory || null,
+        type, date, payment_method, tags || null, notes || null,
+        location || null, is_recurring,
         is_recurring ? recurring_frequency : null,
-        id,
-        req.user.id
+        id, req.userId
       ]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Transaksi tidak ditemukan.' });
-    }
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Transaksi tidak ditemukan' });
     res.json(result.rows[0]);
   } catch (err) {
-    console.error('Update transaction error:', err.message);
-    res.status(500).json({ error: 'Gagal mengupdate transaksi.' });
+    console.error('Update transaction error:', err);
+    res.status(500).json({ error: 'Gagal mengupdate transaksi' });
   }
 });
 
-// DELETE /api/transactions/:id
-app.delete('/api/transactions/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
+app.delete('/api/transactions/:id', authenticate, async (req, res) => {
   try {
     const result = await pool.query(
       'DELETE FROM transactions WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, req.user.id]
+      [req.params.id, req.userId]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Transaksi tidak ditemukan.' });
-    }
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Transaksi tidak ditemukan' });
     res.json({ success: true });
   } catch (err) {
-    console.error('Delete transaction error:', err.message);
-    res.status(500).json({ error: 'Gagal menghapus transaksi.' });
+    console.error('Delete transaction error:', err);
+    res.status(500).json({ error: 'Gagal menghapus transaksi' });
   }
 });
 
-// ============================================================
+// =================================================
 // BUDGETS ROUTES
-// ============================================================
+// =================================================
 
-// GET /api/budgets
-app.get('/api/budgets', authenticateToken, async (req, res) => {
+app.get('/api/budgets', authenticate, async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT
-        b.*,
-        COALESCE(SUM(t.amount), 0)::DECIMAL(15,2) AS spent,
-        GREATEST(b.amount - COALESCE(SUM(t.amount), 0), 0)::DECIMAL(15,2) AS remaining,
-        CASE WHEN b.amount > 0 THEN ROUND(COALESCE(SUM(t.amount), 0) / b.amount * 100, 2) ELSE 0 END AS percentage
-      FROM budgets b
-      LEFT JOIN transactions t ON
-        t.user_id = b.user_id
-        AND t.category = b.category
-        AND t.type = 'expense'
-        AND t.date >= CASE
-          WHEN b.period = 'monthly' THEN date_trunc('month', CURRENT_DATE)::date
-          WHEN b.period = 'yearly'  THEN date_trunc('year',  CURRENT_DATE)::date
-        END
-      WHERE b.user_id = $1
-      GROUP BY b.id
-      ORDER BY b.created_at DESC`,
-      [req.user.id]
+    const budgets = await pool.query(
+      'SELECT * FROM budgets WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.userId]
     );
-    res.json(result.rows);
+
+    // Hitung spent per kategori
+    const now = new Date();
+    const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const startOfYear = `${now.getFullYear()}-01-01`;
+
+    const result = await Promise.all(
+      budgets.rows.map(async (budget) => {
+        const startDate = budget.period === 'yearly' ? startOfYear : startOfMonth;
+        const spent_result = await pool.query(
+          `SELECT COALESCE(SUM(amount), 0) as spent
+           FROM transactions
+           WHERE user_id = $1 AND category = $2 AND type = 'expense' AND date >= $3`,
+          [req.userId, budget.category, startDate]
+        );
+        const spent = parseFloat(spent_result.rows[0].spent);
+        const remaining = Math.max(budget.amount - spent, 0);
+        const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+        return { ...budget, spent, remaining, percentage };
+      })
+    );
+
+    res.json(result);
   } catch (err) {
-    console.error('Get budgets error:', err.message);
-    res.status(500).json({ error: 'Gagal memuat anggaran.' });
+    console.error('Get budgets error:', err);
+    res.status(500).json({ error: 'Gagal mengambil anggaran' });
   }
 });
 
-// POST /api/budgets
-app.post('/api/budgets', authenticateToken, async (req, res) => {
+app.post('/api/budgets', authenticate, async (req, res) => {
   const { category, amount, period } = req.body;
-  if (!category?.trim()) return res.status(400).json({ error: 'Kategori anggaran wajib dipilih.' });
-  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: 'Jumlah anggaran harus lebih dari 0.' });
+
+  if (!category || !amount) {
+    return res.status(400).json({ error: 'Field wajib: category, amount' });
+  }
 
   try {
-    const existing = await pool.query(
-      'SELECT id FROM budgets WHERE user_id = $1 AND category = $2 AND period = $3',
-      [req.user.id, category.trim(), period || 'monthly']
-    );
-    if (existing.rows.length > 0) {
-      return res.status(409).json({ error: `Anggaran untuk kategori "${category}" pada periode ini sudah ada.` });
-    }
-
     const result = await pool.query(
-      'INSERT INTO budgets (user_id, category, amount, period) VALUES ($1, $2, $3, $4) RETURNING *',
-      [req.user.id, category.trim(), Number(amount), period || 'monthly']
+      'INSERT INTO budgets (user_id, category, amount, period) VALUES ($1,$2,$3,$4) RETURNING *',
+      [req.userId, category, amount, period || 'monthly']
     );
-    res.status(201).json(result.rows[0]);
+    const budget = result.rows[0];
+    res.status(201).json({ ...budget, spent: 0, remaining: budget.amount, percentage: 0 });
   } catch (err) {
-    console.error('Add budget error:', err.message);
-    res.status(500).json({ error: 'Gagal menyimpan anggaran.' });
+    console.error('Create budget error:', err);
+    res.status(500).json({ error: 'Gagal menyimpan anggaran' });
   }
 });
 
-// PUT /api/budgets/:id
-app.put('/api/budgets/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
+app.put('/api/budgets/:id', authenticate, async (req, res) => {
   const { category, amount, period } = req.body;
-
   try {
     const result = await pool.query(
       `UPDATE budgets SET
@@ -369,90 +379,90 @@ app.put('/api/budgets/:id', authenticateToken, async (req, res) => {
         amount = COALESCE($2, amount),
         period = COALESCE($3, period),
         updated_at = now()
-      WHERE id = $4 AND user_id = $5
-      RETURNING *`,
-      [category?.trim() || null, amount !== undefined ? Number(amount) : null, period || null, id, req.user.id]
+       WHERE id = $4 AND user_id = $5
+       RETURNING *`,
+      [category, amount, period, req.params.id, req.userId]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Anggaran tidak ditemukan.' });
-    }
-    res.json(result.rows[0]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Anggaran tidak ditemukan' });
+
+    const budget = result.rows[0];
+    const now = new Date();
+    const startDate = budget.period === 'yearly'
+      ? `${now.getFullYear()}-01-01`
+      : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+
+    const spent_result = await pool.query(
+      `SELECT COALESCE(SUM(amount), 0) as spent
+       FROM transactions
+       WHERE user_id = $1 AND category = $2 AND type = 'expense' AND date >= $3`,
+      [req.userId, budget.category, startDate]
+    );
+    const spent = parseFloat(spent_result.rows[0].spent);
+    const remaining = Math.max(budget.amount - spent, 0);
+    const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+
+    res.json({ ...budget, spent, remaining, percentage });
   } catch (err) {
-    console.error('Update budget error:', err.message);
-    res.status(500).json({ error: 'Gagal mengupdate anggaran.' });
+    console.error('Update budget error:', err);
+    res.status(500).json({ error: 'Gagal mengupdate anggaran' });
   }
 });
 
-// DELETE /api/budgets/:id
-app.delete('/api/budgets/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
+app.delete('/api/budgets/:id', authenticate, async (req, res) => {
   try {
     const result = await pool.query(
       'DELETE FROM budgets WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, req.user.id]
+      [req.params.id, req.userId]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Anggaran tidak ditemukan.' });
-    }
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Anggaran tidak ditemukan' });
     res.json({ success: true });
   } catch (err) {
-    console.error('Delete budget error:', err.message);
-    res.status(500).json({ error: 'Gagal menghapus anggaran.' });
+    console.error('Delete budget error:', err);
+    res.status(500).json({ error: 'Gagal menghapus anggaran' });
   }
 });
 
-// ============================================================
+// =================================================
 // FINANCIAL GOALS ROUTES
-// ============================================================
+// =================================================
 
-// GET /api/goals
-app.get('/api/goals', authenticateToken, async (req, res) => {
+app.get('/api/goals', authenticate, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM financial_goals WHERE user_id = $1 ORDER BY created_at DESC',
-      [req.user.id]
+      [req.userId]
     );
     res.json(result.rows);
   } catch (err) {
-    console.error('Get goals error:', err.message);
-    res.status(500).json({ error: 'Gagal memuat target keuangan.' });
+    console.error('Get goals error:', err);
+    res.status(500).json({ error: 'Gagal mengambil target keuangan' });
   }
 });
 
-// POST /api/goals
-app.post('/api/goals', authenticateToken, async (req, res) => {
+app.post('/api/goals', authenticate, async (req, res) => {
   const { title, target_amount, current_amount, deadline, category, priority } = req.body;
-  if (!title?.trim()) return res.status(400).json({ error: 'Judul target wajib diisi.' });
-  if (!target_amount || Number(target_amount) <= 0) return res.status(400).json({ error: 'Target jumlah harus lebih dari 0.' });
-  if (!deadline) return res.status(400).json({ error: 'Batas waktu target wajib diisi.' });
-  if (!category?.trim()) return res.status(400).json({ error: 'Kategori target wajib dipilih.' });
+
+  if (!title || !target_amount || !deadline || !category) {
+    return res.status(400).json({ error: 'Field wajib: title, target_amount, deadline, category' });
+  }
 
   try {
     const result = await pool.query(
-      `INSERT INTO financial_goals (user_id, title, target_amount, current_amount, deadline, category, priority)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [
-        req.user.id,
-        title.trim(),
-        Number(target_amount),
-        Number(current_amount || 0),
-        deadline,
-        category.trim(),
-        priority || 'medium'
-      ]
+      `INSERT INTO financial_goals
+        (user_id, title, target_amount, current_amount, deadline, category, priority)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       RETURNING *`,
+      [req.userId, title, target_amount, current_amount || 0, deadline, category, priority || 'medium']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Add goal error:', err.message);
-    res.status(500).json({ error: 'Gagal menyimpan target keuangan.' });
+    console.error('Create goal error:', err);
+    res.status(500).json({ error: 'Gagal menyimpan target keuangan' });
   }
 });
 
-// PUT /api/goals/:id
-app.put('/api/goals/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
+app.put('/api/goals/:id', authenticate, async (req, res) => {
   const { title, target_amount, current_amount, deadline, category, priority } = req.body;
-
   try {
     const result = await pool.query(
       `UPDATE financial_goals SET
@@ -463,100 +473,84 @@ app.put('/api/goals/:id', authenticateToken, async (req, res) => {
         category = COALESCE($5, category),
         priority = COALESCE($6, priority),
         updated_at = now()
-      WHERE id = $7 AND user_id = $8
-      RETURNING *`,
-      [
-        title?.trim() || null,
-        target_amount !== undefined ? Number(target_amount) : null,
-        current_amount !== undefined ? Number(current_amount) : null,
-        deadline || null,
-        category?.trim() || null,
-        priority || null,
-        id,
-        req.user.id
-      ]
+       WHERE id = $7 AND user_id = $8
+       RETURNING *`,
+      [title, target_amount, current_amount, deadline, category, priority, req.params.id, req.userId]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Target keuangan tidak ditemukan.' });
-    }
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Target keuangan tidak ditemukan' });
     res.json(result.rows[0]);
   } catch (err) {
-    console.error('Update goal error:', err.message);
-    res.status(500).json({ error: 'Gagal mengupdate target keuangan.' });
+    console.error('Update goal error:', err);
+    res.status(500).json({ error: 'Gagal mengupdate target keuangan' });
   }
 });
 
-// DELETE /api/goals/:id
-app.delete('/api/goals/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
+app.delete('/api/goals/:id', authenticate, async (req, res) => {
   try {
     const result = await pool.query(
       'DELETE FROM financial_goals WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, req.user.id]
+      [req.params.id, req.userId]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Target keuangan tidak ditemukan.' });
-    }
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Target keuangan tidak ditemukan' });
     res.json({ success: true });
   } catch (err) {
-    console.error('Delete goal error:', err.message);
-    res.status(500).json({ error: 'Gagal menghapus target keuangan.' });
+    console.error('Delete goal error:', err);
+    res.status(500).json({ error: 'Gagal menghapus target keuangan' });
   }
 });
 
-// ============================================================
+// =================================================
 // DEBTS ROUTES
-// ============================================================
+// =================================================
 
-// GET /api/debts
-app.get('/api/debts', authenticateToken, async (req, res) => {
+app.get('/api/debts', authenticate, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM debts WHERE user_id = $1 ORDER BY created_at DESC',
-      [req.user.id]
+      [req.userId]
     );
     res.json(result.rows);
   } catch (err) {
-    console.error('Get debts error:', err.message);
-    res.status(500).json({ error: 'Gagal memuat data hutang.' });
+    console.error('Get debts error:', err);
+    res.status(500).json({ error: 'Gagal mengambil data hutang' });
   }
 });
 
-// POST /api/debts
-app.post('/api/debts', authenticateToken, async (req, res) => {
-  const { creditor_name, debtor_name, amount, description, due_date, status, type, interest_rate } = req.body;
-  if (!creditor_name?.trim()) return res.status(400).json({ error: 'Nama kreditor wajib diisi.' });
-  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: 'Jumlah hutang harus lebih dari 0.' });
-  if (!description?.trim()) return res.status(400).json({ error: 'Deskripsi hutang wajib diisi.' });
-  if (!type || !['debt', 'receivable'].includes(type)) return res.status(400).json({ error: 'Tipe hutang tidak valid.' });
+app.post('/api/debts', authenticate, async (req, res) => {
+  const {
+    creditor_name, debtor_name, amount, description,
+    due_date, status, type, interest_rate
+  } = req.body;
+
+  if (!creditor_name || !amount || !description || !type) {
+    return res.status(400).json({ error: 'Field wajib: creditor_name, amount, description, type' });
+  }
 
   try {
     const result = await pool.query(
-      `INSERT INTO debts (user_id, creditor_name, debtor_name, amount, remaining_amount, description, due_date, status, type, interest_rate)
-       VALUES ($1, $2, $3, $4, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      `INSERT INTO debts
+        (user_id, creditor_name, debtor_name, amount, remaining_amount, description,
+         due_date, status, type, interest_rate)
+       VALUES ($1,$2,$3,$4,$4,$5,$6,$7,$8,$9)
+       RETURNING *`,
       [
-        req.user.id,
-        creditor_name.trim(),
-        debtor_name?.trim() || null,
-        Number(amount),
-        description.trim(),
-        due_date || null,
-        status || 'pending',
-        type,
-        Number(interest_rate || 0)
+        req.userId, creditor_name, debtor_name || null, amount,
+        description, due_date || null, status || 'pending',
+        type, interest_rate || 0
       ]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Add debt error:', err.message);
-    res.status(500).json({ error: 'Gagal menyimpan data hutang.' });
+    console.error('Create debt error:', err);
+    res.status(500).json({ error: 'Gagal menyimpan hutang' });
   }
 });
 
-// PUT /api/debts/:id
-app.put('/api/debts/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  const { creditor_name, debtor_name, amount, description, due_date, status, type, interest_rate } = req.body;
+app.put('/api/debts/:id', authenticate, async (req, res) => {
+  const {
+    creditor_name, debtor_name, amount, description,
+    due_date, status, type, interest_rate
+  } = req.body;
 
   try {
     const result = await pool.query(
@@ -570,194 +564,143 @@ app.put('/api/debts/:id', authenticateToken, async (req, res) => {
         type = COALESCE($7, type),
         interest_rate = COALESCE($8, interest_rate),
         updated_at = now()
-      WHERE id = $9 AND user_id = $10
-      RETURNING *`,
+       WHERE id = $9 AND user_id = $10
+       RETURNING *`,
       [
-        creditor_name?.trim() || null,
-        debtor_name?.trim() || null,
-        amount !== undefined ? Number(amount) : null,
-        description?.trim() || null,
-        due_date || null,
-        status || null,
-        type || null,
-        interest_rate !== undefined ? Number(interest_rate) : null,
-        id,
-        req.user.id
+        creditor_name, debtor_name || null, amount, description,
+        due_date || null, status, type, interest_rate,
+        req.params.id, req.userId
       ]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Data hutang tidak ditemukan.' });
-    }
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Hutang tidak ditemukan' });
     res.json(result.rows[0]);
   } catch (err) {
-    console.error('Update debt error:', err.message);
-    res.status(500).json({ error: 'Gagal mengupdate data hutang.' });
+    console.error('Update debt error:', err);
+    res.status(500).json({ error: 'Gagal mengupdate hutang' });
   }
 });
 
-// DELETE /api/debts/:id
-app.delete('/api/debts/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
+app.delete('/api/debts/:id', authenticate, async (req, res) => {
   try {
     const result = await pool.query(
       'DELETE FROM debts WHERE id = $1 AND user_id = $2 RETURNING id',
-      [id, req.user.id]
+      [req.params.id, req.userId]
     );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Data hutang tidak ditemukan.' });
-    }
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Hutang tidak ditemukan' });
     res.json({ success: true });
   } catch (err) {
-    console.error('Delete debt error:', err.message);
-    res.status(500).json({ error: 'Gagal menghapus data hutang.' });
+    console.error('Delete debt error:', err);
+    res.status(500).json({ error: 'Gagal menghapus hutang' });
   }
 });
 
-// POST /api/debts/:id/payments
-app.post('/api/debts/:id/payments', authenticateToken, async (req, res) => {
-  const { id: debtId } = req.params;
+// =================================================
+// DEBT PAYMENTS ROUTES
+// =================================================
+
+app.get('/api/debts/:debtId/payments', authenticate, async (req, res) => {
+  try {
+    // Pastikan debt milik user
+    const debtCheck = await pool.query(
+      'SELECT id FROM debts WHERE id = $1 AND user_id = $2',
+      [req.params.debtId, req.userId]
+    );
+    if (debtCheck.rows.length === 0) return res.status(404).json({ error: 'Hutang tidak ditemukan' });
+
+    const result = await pool.query(
+      'SELECT * FROM debt_payments WHERE debt_id = $1 ORDER BY payment_date DESC',
+      [req.params.debtId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Get payments error:', err);
+    res.status(500).json({ error: 'Gagal mengambil data pembayaran' });
+  }
+});
+
+app.post('/api/debts/:debtId/payments', authenticate, async (req, res) => {
   const { amount, payment_date, notes } = req.body;
 
-  if (!amount || Number(amount) <= 0) return res.status(400).json({ error: 'Jumlah pembayaran harus lebih dari 0.' });
-  if (!payment_date) return res.status(400).json({ error: 'Tanggal pembayaran wajib diisi.' });
+  if (!amount || !payment_date) {
+    return res.status(400).json({ error: 'Field wajib: amount, payment_date' });
+  }
 
   try {
-    // Verifikasi hutang milik user ini
+    // Pastikan debt milik user dan cek remaining_amount
     const debtResult = await pool.query(
       'SELECT id, remaining_amount FROM debts WHERE id = $1 AND user_id = $2',
-      [debtId, req.user.id]
+      [req.params.debtId, req.userId]
     );
+
     if (debtResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Data hutang tidak ditemukan.' });
-    }
-    const debt = debtResult.rows[0];
-    if (Number(amount) > Number(debt.remaining_amount)) {
-      return res.status(400).json({ error: `Jumlah pembayaran tidak boleh lebih dari sisa hutang (${debt.remaining_amount}).` });
+      return res.status(404).json({ error: 'Hutang tidak ditemukan' });
     }
 
-    // Insert payment (trigger otomatis update debts)
+    const debt = debtResult.rows[0];
+    if (amount > debt.remaining_amount) {
+      return res.status(400).json({
+        error: `Jumlah pembayaran tidak boleh lebih dari sisa hutang (${debt.remaining_amount})`
+      });
+    }
+
     const result = await pool.query(
-      'INSERT INTO debt_payments (debt_id, amount, payment_date, notes) VALUES ($1, $2, $3, $4) RETURNING *',
-      [debtId, Number(amount), payment_date, notes?.trim() || null]
+      'INSERT INTO debt_payments (debt_id, amount, payment_date, notes) VALUES ($1,$2,$3,$4) RETURNING *',
+      [req.params.debtId, amount, payment_date, notes || null]
     );
 
+    // Trigger otomatis mengupdate remaining_amount dan status
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Add payment error:', err.message);
-    res.status(500).json({ error: 'Gagal menambah pembayaran.' });
+    console.error('Create payment error:', err);
+    res.status(500).json({ error: 'Gagal menyimpan pembayaran' });
   }
 });
 
-// DELETE /api/debts/:id/payments/:paymentId
-app.delete('/api/debts/:id/payments/:paymentId', authenticateToken, async (req, res) => {
-  const { id: debtId, paymentId } = req.params;
+// =================================================
+// HEALTH CHECK
+// =================================================
+
+app.get('/api/health', async (req, res) => {
   try {
-    // Verifikasi payment milik debt yang milik user ini
-    const result = await pool.query(
-      `DELETE FROM debt_payments dp
-       USING debts d
-       WHERE dp.id = $1 AND dp.debt_id = $2 AND d.id = dp.debt_id AND d.user_id = $3
-       RETURNING dp.id`,
-      [paymentId, debtId, req.user.id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Data pembayaran tidak ditemukan.' });
-    }
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Delete payment error:', err.message);
-    res.status(500).json({ error: 'Gagal menghapus pembayaran.' });
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', database: 'connected', timestamp: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'error', database: 'disconnected' });
   }
 });
 
-// ============================================================
-// PROFILE ROUTES
-// ============================================================
+// =================================================
+// SERVE STATIC FILES (PRODUCTION)
+// =================================================
 
-// GET /api/profile
-app.get('/api/profile', authenticateToken, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT p.*, u.email, u.created_at AS user_created_at
-       FROM user_profiles p
-       JOIN users u ON u.id = p.id
-       WHERE p.id = $1`,
-      [req.user.id]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Profil tidak ditemukan.' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Get profile error:', err.message);
-    res.status(500).json({ error: 'Gagal memuat profil.' });
+const listenPort = IS_PRODUCTION ? PORT : API_PORT;
+
+if (IS_PRODUCTION) {
+  const distPath = path.join(__dirname, 'dist');
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else {
+    console.warn('⚠️  Folder dist tidak ditemukan. Jalankan: npm run build');
   }
-});
+}
 
-// PUT /api/profile
-app.put('/api/profile', authenticateToken, async (req, res) => {
-  const { full_name, avatar_url, occupation, phone, location, bio } = req.body;
-  try {
-    const result = await pool.query(
-      `UPDATE user_profiles SET
-        full_name = COALESCE($1, full_name),
-        avatar_url = $2,
-        occupation = $3,
-        phone = $4,
-        location = $5,
-        bio = $6,
-        updated_at = now()
-      WHERE id = $7
-      RETURNING *`,
-      [
-        full_name?.trim() || null,
-        avatar_url || null,
-        occupation?.trim() || null,
-        phone?.trim() || null,
-        location?.trim() || null,
-        bio?.trim() || null,
-        req.user.id
-      ]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Profil tidak ditemukan.' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Update profile error:', err.message);
-    res.status(500).json({ error: 'Gagal mengupdate profil.' });
+// =================================================
+// START SERVER
+// =================================================
+
+app.listen(listenPort, '0.0.0.0', () => {
+  console.log('');
+  console.log('🚀 Keuangan Personal Server berjalan');
+  console.log(`📡 Port: ${listenPort}`);
+  console.log(`🗄️  Database: ${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME || 'keuangan_personal'}`);
+  if (IS_PRODUCTION) {
+    console.log(`🌐 Akses: http://localhost:${listenPort}`);
+  } else {
+    console.log(`📡 API Dev Server: http://localhost:${listenPort}/api`);
+    console.log(`💡 Untuk frontend, jalankan: npm run dev`);
   }
-});
-
-// GET /api/profile/stats
-app.get('/api/profile/stats', authenticateToken, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT
-        (SELECT COUNT(*) FROM transactions WHERE user_id = $1)::int AS transaction_count,
-        (SELECT COUNT(*) FROM budgets WHERE user_id = $1)::int AS budget_count,
-        (SELECT COUNT(*) FROM financial_goals WHERE user_id = $1)::int AS goal_count,
-        (SELECT COUNT(*) FROM debts WHERE user_id = $1)::int AS debt_count`,
-      [req.user.id]
-    );
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Get stats error:', err.message);
-    res.status(500).json({ error: 'Gagal memuat statistik.' });
-  }
-});
-
-// ============================================================
-// STATIC FILE SERVING (harus setelah semua API routes)
-// ============================================================
-app.use(express.static(path.join(__dirname, 'dist')));
-
-app.get(/^(?!\/api).*$/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Keuangan Personal Server running on port ${port}`);
-  console.log(`📱 Access: http://localhost:${port}`);
-  console.log(`🗄️  Database: ${process.env.DB_NAME}@${process.env.DB_HOST}:${process.env.DB_PORT}`);
+  console.log('');
 });
